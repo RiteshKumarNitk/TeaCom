@@ -1,23 +1,36 @@
--- Storage Bucket for Products
--- Run this in SQL Editor
 
--- 1. Create the bucket
+-- Create Storage Bucket for Blog Images
 insert into storage.buckets (id, name, public)
-values ('products', 'products', true);
+values ('blog-images', 'blog-images', true)
+on conflict (id) do nothing;
 
--- 2. Enable RLS
-create policy "Public Access"
+-- Policy: Public Read Access (Scoped to blog-images)
+create policy "Public Access blog-images"
   on storage.objects for select
-  using ( bucket_id = 'products' );
+  using ( bucket_id = 'blog-images' );
 
-create policy "Admin Upload"
+-- Policy: Admin Upload Access (Scoped to blog-images)
+create policy "Admin Upload Access blog-images"
   on storage.objects for insert
-  with check ( bucket_id = 'products' and auth.role() = 'authenticated' ); -- Refine if needed to check profiles.role
+  with check (
+    bucket_id = 'blog-images' 
+    and auth.role() = 'authenticated'
+    and (select role from public.profiles where id = auth.uid()) = 'admin'
+  );
 
-create policy "Admin Update"
+-- Policy: Admin Update/Delete Access (Scoped to blog-images)
+create policy "Admin Update Access blog-images"
   on storage.objects for update
-  using ( bucket_id = 'products' and auth.role() = 'authenticated' );
+  using (
+    bucket_id = 'blog-images' 
+    and auth.role() = 'authenticated'
+    and (select role from public.profiles where id = auth.uid()) = 'admin'
+  );
 
-create policy "Admin Delete"
+create policy "Admin Delete Access blog-images"
   on storage.objects for delete
-  using ( bucket_id = 'products' and auth.role() = 'authenticated' );
+  using (
+    bucket_id = 'blog-images' 
+    and auth.role() = 'authenticated'
+    and (select role from public.profiles where id = auth.uid()) = 'admin'
+  );

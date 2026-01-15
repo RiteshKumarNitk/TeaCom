@@ -1,14 +1,15 @@
 "use client";
+// Force update
 
-import { Product } from "@/types/product";
+import { Product, ProductVariant } from "@/types/product";
 import { useCountry } from "@/context/country-context";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Minus, Plus, ShoppingBag, Truck, ShieldCheck, Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { useCart } from "@/context/cart-context"; // [NEW]
+import { useCart } from "@/context/cart-context";
 
 interface ProductDetailsProps {
     product: Product;
@@ -16,16 +17,36 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ product }: ProductDetailsProps) {
     const { country } = useCountry();
-    const { addItem } = useCart(); // [NEW]
+    const { addItem } = useCart();
     const [quantity, setQuantity] = useState(1);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
 
-    // Pricing Logic (Select variant or base)
-    const price = product.basePrice[country] || product.basePrice["in"];
+    // Initialize variant selection if variants exist
+    useEffect(() => {
+        if (product.variants && product.variants.length > 0) {
+            setSelectedVariantId(product.variants[0].id);
+        }
+    }, [product.variants]);
+
+    const selectedVariant = product.variants?.find(v => v.id === selectedVariantId);
+
+    // Determine Price
+    let price;
+    if (selectedVariant) {
+        price = selectedVariant.pricing[country] || selectedVariant.pricing["in"];
+    } else {
+        price = product.basePrice[country] || product.basePrice["in"];
+    }
+
     const currencySymbol = price.currency === "INR" ? "₹" : "﷼";
 
     const handleAddToCart = () => {
-        addItem(product, quantity);
+        if (selectedVariant) {
+            addItem(product, quantity, selectedVariant.id, selectedVariant.name, price);
+        } else {
+            addItem(product, quantity);
+        }
     };
 
     return (
@@ -89,13 +110,43 @@ export function ProductDetails({ product }: ProductDetailsProps) {
                                 {currencySymbol} {price.amount}
                             </span>
                             <span className="text-muted-foreground text-sm mb-1">
-                                / 100g (Approx. 50 cups)
+                                {selectedVariant ? `/ ${selectedVariant.name}` : '/ 100g (Approx. 50 cups)'}
                             </span>
                         </div>
                         <p className="text-muted-foreground leading-relaxed text-lg">
                             {product.description}
                         </p>
                     </div>
+
+                    {/* Variant Selector */}
+                    {product.variants && product.variants.length > 0 && (
+                        <div className="mb-8">
+                            <h4 className="font-semibold mb-3 flex items-center gap-2">Select Size</h4>
+                            <div className="flex flex-wrap gap-3">
+                                {product.variants.map((variant) => {
+                                    const vPrice = variant.pricing[country] || variant.pricing["in"];
+                                    const isSelected = selectedVariantId === variant.id;
+                                    return (
+                                        <button
+                                            key={variant.id}
+                                            onClick={() => setSelectedVariantId(variant.id)}
+                                            className={cn(
+                                                "px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-2",
+                                                isSelected
+                                                    ? "border-primary bg-primary/5 text-primary ring-1 ring-primary"
+                                                    : "border-border hover:border-primary/50 text-muted-foreground"
+                                            )}
+                                        >
+                                            {variant.name}
+                                            <span className={cn("text-xs", isSelected ? "text-primary/70" : "text-muted-foreground/70")}>
+                                                ({vPrice.currency === "INR" ? "₹" : "﷼"}{vPrice.amount})
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Ingredients & Benefits */}
                     <div className="grid grid-cols-2 gap-6 mb-8">

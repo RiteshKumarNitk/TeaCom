@@ -201,6 +201,121 @@ export interface Database {
                     created_at?: string
                 }
             }
+            posts: {
+                Row: {
+                    id: string
+                    created_at: string
+                    title: string
+                    slug: string
+                    content: string | null
+                    excerpt: string | null
+                    author: string | null
+                    is_published: boolean
+                    published_at: string | null
+                    cover_image: string | null
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    title: string
+                    slug: string
+                    content?: string | null
+                    excerpt?: string | null
+                    author?: string | null
+                    is_published?: boolean
+                    published_at?: string | null
+                    cover_image?: string | null
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    title?: string
+                    slug?: string
+                    content?: string | null
+                    excerpt?: string | null
+                    author?: string | null
+                    is_published?: boolean
+                    published_at?: string | null
+                    cover_image?: string | null
+                }
+            }
+            coupons: {
+                Row: {
+                    id: string
+                    created_at: string
+                    code: string
+                    description: string | null
+                    discount_type: "percentage" | "fixed"
+                    discount_value: number
+                    min_order_amount: number | null
+                    max_discount_amount: number | null
+                    start_date: string | null
+                    expires_at: string | null
+                    is_active: boolean
+                    usage_limit: number | null
+                    usage_count: number
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    code: string
+                    description?: string | null
+                    discount_type: "percentage" | "fixed"
+                    discount_value: number
+                    min_order_amount?: number | null
+                    max_discount_amount?: number | null
+                    start_date?: string | null
+                    expires_at?: string | null
+                    is_active?: boolean
+                    usage_limit?: number | null
+                    usage_count?: number
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    code?: string
+                    description?: string | null
+                    discount_type?: "percentage" | "fixed"
+                    discount_value?: number
+                    min_order_amount?: number | null
+                    max_discount_amount?: number | null
+                    start_date?: string | null
+                    expires_at?: string | null
+                    is_active?: boolean
+                    usage_limit?: number | null
+                    usage_count?: number
+                }
+            }
+            wishlists: {
+                Row: {
+                    id: string
+                    created_at: string
+                    user_id: string
+                    product_id: string
+                }
+                Insert: {
+                    id?: string
+                    created_at?: string
+                    user_id: string
+                    product_id: string
+                }
+                Update: {
+                    id?: string
+                    created_at?: string
+                    user_id?: string
+                    product_id?: string
+                }
+            }
+        }
+        Functions: {
+            increment_coupon_usage: {
+                Args: {
+                    coupon_code: string
+                }
+                Returns: void
+            }
         }
     }
 }
+
+

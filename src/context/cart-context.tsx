@@ -9,12 +9,13 @@ export interface CartItem {
     product: Product;
     quantity: number;
     variantId?: string;
+    variantName?: string; // [NEW] e.g. "1kg" or "500g"
     price: Money; // Snapshot price at time of add
 }
 
 interface CartContextType {
     items: CartItem[];
-    addItem: (product: Product, quantity: number, variantId?: string) => void;
+    addItem: (product: Product, quantity: number, variantId?: string, variantName?: string, variantPrice?: Money) => void;
     removeItem: (itemId: string) => void;
     updateQuantity: (itemId: string, quantity: number) => void;
     clearCart: () => void;
@@ -52,9 +53,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }, [items, isInitialized]);
 
-    const addItem = useCallback((product: Product, quantity: number, variantId?: string) => {
-        // Get current country price
-        const currentPrice = product.basePrice[country] || product.basePrice["in"];
+    const addItem = useCallback((product: Product, quantity: number, variantId?: string, variantName?: string, variantPrice?: Money) => {
+        // Use provided variant price OR fallback to base price
+        const currentPrice = variantPrice || (product.basePrice[country] || product.basePrice["in"]);
 
         // Construct unique ID
         const cartItemId = variantId ? `${product.id}_${variantId}` : product.id;
@@ -75,7 +76,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                     product,
                     quantity,
                     variantId,
-                    price: currentPrice, // Store the price relevant to CURRENT country
+                    variantName,
+                    price: currentPrice,
                 },
             ];
         });

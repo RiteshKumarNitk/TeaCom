@@ -7,8 +7,17 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
 import { UserMenu } from "./user-menu";
+import { NotificationBell } from "./notification-bell";
 
-export function Header() {
+// Define Coupon Interface locally or import it. For now locally.
+interface Coupon {
+    code: string;
+    discount_type: "percentage" | "fixed";
+    discount_value: number;
+    description?: string;
+}
+
+export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
     const [scrolled, setScrolled] = useState(false);
     const { cartCount, setIsOpen } = useCart();
 
@@ -20,18 +29,38 @@ export function Header() {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    const marqueeContent = coupons.length > 0 ? (
+        coupons.map((coupon) => (
+            <span key={coupon.code} className="font-bold">
+                🎫 Use code {coupon.code} for {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`} OFF!
+            </span>
+        ))
+    ) : (
+        <>
+            <span>🎉 20 Lakh + Happy Customers</span>
+            <span>•</span>
+            <span>Featured on Shark Tank India 🦈</span>
+            <span>•</span>
+            <span>🎁 Free Gift on Orders Above ₹1299!</span>
+        </>
+    );
+
     return (
         <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-border/50 shadow-sm">
             {/* Top Bar - Blue */}
             <div className="bg-primary text-primary-foreground py-2 text-[10px] sm:text-xs font-medium tracking-wide">
                 <div className="container mx-auto px-4 flex justify-between items-center whitespace-nowrap overflow-hidden">
                     <div className="flex gap-4 md:gap-8 animate-marquee sm:animate-none">
-                        <span>🎉 20 Lakh + Happy Customers</span>
-                        <span>•</span>
-                        <span>Featured on Shark Tank India 🦈</span>
-                        <span>•</span>
-                        <span>🎁 Free Gift on Orders Above ₹1299!</span>
+                        {marqueeContent}
+                        {/* Repeat for continuous effect if few items */}
+                        {coupons.length > 0 && coupons.length < 3 && (
+                            <>
+                                <span>•</span>
+                                {marqueeContent}
+                            </>
+                        )}
                     </div>
+                // ... rest of header ...
                     <div className="hidden md:flex gap-4">
                         <Link href="/track" className="hover:text-yellow-300 transition-colors">Track Order</Link>
                         <Link href="/contact" className="hover:text-yellow-300 transition-colors">Contact Us</Link>
@@ -78,6 +107,8 @@ export function Header() {
                         <Link href="/wishlist" className="p-2 hover:bg-muted rounded-full transition-colors hidden sm:flex text-foreground/70 hover:text-primary">
                             <Heart className="w-5 h-5" />
                         </Link>
+
+                        <NotificationBell />
 
                         <UserMenu />
 

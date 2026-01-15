@@ -98,7 +98,7 @@ export async function deleteProduct(formData: FormData) {
     const supabase = await createClient();
     const id = formData.get("id") as string;
 
-    await supabase.from("products").delete().eq("id", id);
+    await (supabase as any).from("products").delete().eq("id", id);
     revalidatePath("/admin/products");
 }
 
@@ -119,7 +119,7 @@ export async function updateProduct(formData: FormData) {
     const ingredients = (formData.get("ingredients") as string)?.split("\n").map(s => s.trim()).filter(Boolean) || [];
 
     // 1. Fetch existing images to append
-    const { data: currentProduct } = await supabase
+    const { data: currentProduct } = await (supabase as any)
         .from("products")
         .select("images")
         .eq("id", id)
@@ -163,7 +163,7 @@ export async function updateProduct(formData: FormData) {
     // Delete existing prices and re-insert is easier for now, or update smartly.
     // Let's do a simple upsert per currency check
     // Wait, let's delete and re-insert to avoid complex sync
-    await supabase.from("product_prices").delete().eq("product_id", id);
+    await (supabase as any).from("product_prices").delete().eq("product_id", id);
     await (supabase as any).from("product_prices").insert([
         { product_id: id, currency: "INR", amount: priceINR },
         { product_id: id, currency: "SAR", amount: priceSAR }

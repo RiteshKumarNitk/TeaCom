@@ -10,7 +10,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     const { id } = await params;
 
     // Fetch Product with Prices and Variants
-    const { data: product } = await supabase
+    const { data } = await supabase
         .from("products")
         .select(`
             *,
@@ -19,6 +19,8 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         `)
         .eq("id", id)
         .single();
+
+    const product = data as any;
 
     if (!product) {
         redirect("/admin/products");
