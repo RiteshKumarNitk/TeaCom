@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { DailyRevenue } from "@/services/analytics/analytics.service";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface SalesChartProps {
     data: DailyRevenue[];
@@ -11,39 +12,66 @@ interface SalesChartProps {
 export function SalesChart({ data, className }: SalesChartProps) {
     if (!data.length) return <div className="text-muted-foreground text-sm">No data available</div>;
 
-    const maxRevenue = Math.max(...data.map(d => d.revenue));
+    // Filter data to remove trailing zeroes if needed, or keep to show activity gaps
+    // For visual clarity, we might format the date
+    const formattedData = data.map(item => ({
+        ...item,
+        date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }));
 
     return (
-        <div className={cn("w-full h-64 flex items-end gap-1 pt-6", className)}>
-            {data.map((day) => {
-                // Calculate height percentage (min 10% to show bar)
-                const heightPercent = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
-
-                return (
-                    <div
-                        key={day.date}
-                        className="flex-1 flex flex-col items-center group relative min-w-[20px]"
-                    >
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-popover text-popover-foreground text-xs rounded-md shadow-md p-2 border z-10 whitespace-nowrap pointer-events-none">
-                            <div className="font-semibold">{day.date}</div>
-                            <div>Revenue: {day.revenue}</div>
-                            <div>Orders: {day.orders}</div>
-                        </div>
-
-                        {/* Bar */}
-                        <div
-                            className="w-full bg-primary/20 hover:bg-primary rounded-t-md transition-all duration-300 relative"
-                            style={{ height: `${Math.max(heightPercent, 2)}%` }} // Min height 2%
-                        >
-                            {/* Top Line Indicator */}
-                            {heightPercent > 0 && (
-                                <div className="w-full h-1 bg-primary absolute top-0 left-0 rounded-t-md opacity-50" />
-                            )}
-                        </div>
-                    </div>
-                );
-            })}
+        <div className={cn("w-full h-80", className)}>
+            <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={formattedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis
+                        dataKey="date"
+                        stroke="#888888"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        minTickGap={30}
+                    />
+                    <YAxis
+                        stroke="#888888"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `$${value}`}
+                    />
+                    <Tooltip
+                        cursor={{ fill: 'transparent' }}
+                        content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                const data = payload[0].payload as any;
+                                return (
+                                    <div className="bg-popover border border-border rounded-lg shadow-sm p-3 text-sm">
+                                        <div className="font-semibold mb-1">{data.date}</div>
+                                        <div className="flex justify-between gap-4">
+                                            <span className="text-muted-foreground">Revenue:</span>
+                                            <span className="font-medium text-emerald-600">
+                                                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(data.revenue)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between gap-4">
+                                            <span className="text-muted-foreground">Orders:</span>
+                                            <span className="font-medium">{data.orders}</span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        }}
+                    />
+                    <Bar
+                        dataKey="revenue"
+                        fill="currentColor"
+                        radius={[4, 4, 0, 0]}
+                        className="fill-primary"
+                        maxBarSize={40}
+                    />
+                </BarChart>
+            </ResponsiveContainer>
         </div>
     );
 }

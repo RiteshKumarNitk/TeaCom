@@ -9,301 +9,330 @@ export type Json =
 export interface Database {
     public: {
         Tables: {
-            products: {
+            coupons: {
                 Row: {
-                    id: string
+                    code: string
                     created_at: string
-                    slug: string
-                    name: string
                     description: string | null
-                    images: string[] | null
-                    category: string | null
-                    tags: string[] | null
-                    benefits: string[] | null
-                    ingredients: string[] | null
-                    is_bestseller: boolean
-                    is_new: boolean
-                    metadata: Json | null
+                    discount_type: "percentage" | "fixed"
+                    discount_value: number
+                    expires_at: string | null
+                    id: string
+                    is_active: boolean
+                    max_discount_amount: number | null
+                    min_order_amount: number | null
+                    start_date: string | null
+                    usage_count: number
+                    usage_limit: number | null
                 }
                 Insert: {
-                    id?: string
+                    code: string
                     created_at?: string
-                    slug: string
-                    name: string
                     description?: string | null
-                    images?: string[] | null
-                    category?: string | null
-                    tags?: string[] | null
-                    benefits?: string[] | null
-                    ingredients?: string[] | null
-                    is_bestseller?: boolean
-                    is_new?: boolean
-                    metadata?: Json | null
+                    discount_type: "percentage" | "fixed"
+                    discount_value: number
+                    expires_at?: string | null
+                    id?: string
+                    is_active?: boolean
+                    max_discount_amount?: number | null
+                    min_order_amount?: number | null
+                    start_date?: string | null
+                    usage_count?: number
+                    usage_limit?: number | null
                 }
                 Update: {
-                    id?: string
+                    code?: string
                     created_at?: string
-                    slug?: string
-                    name?: string
                     description?: string | null
-                    images?: string[] | null
-                    category?: string | null
-                    tags?: string[] | null
-                    benefits?: string[] | null
-                    ingredients?: string[] | null
-                    is_bestseller?: boolean
-                    is_new?: boolean
-                    metadata?: Json | null
+                    discount_type?: "percentage" | "fixed"
+                    discount_value?: number
+                    expires_at?: string | null
+                    id?: string
+                    is_active?: boolean
+                    max_discount_amount?: number | null
+                    min_order_amount?: number | null
+                    start_date?: string | null
+                    usage_count?: number
+                    usage_limit?: number | null
+                }
+            }
+            notifications: {
+                Row: {
+                    created_at: string
+                    id: string
+                    is_read: boolean
+                    message: string
+                    title: string
+                    type: string
+                    user_id: string | null
+                }
+                Insert: {
+                    created_at?: string
+                    id?: string
+                    is_read?: boolean
+                    message: string
+                    title: string
+                    type: string
+                    user_id?: string | null
+                }
+                Update: {
+                    created_at?: string
+                    id?: string
+                    is_read?: boolean
+                    message?: string
+                    title?: string
+                    type?: string
+                    user_id?: string | null
+                }
+            }
+            order_items: {
+                Row: {
+                    currency: string
+                    id: string
+                    order_id: string
+                    price_amount: number
+                    product_id: string
+                    product_name: string
+                    quantity: number
+                    variant_id: string | null
+                }
+                Insert: {
+                    currency: string
+                    id?: string
+                    order_id: string
+                    price_amount: number
+                    product_id: string
+                    product_name: string
+                    quantity: number
+                    variant_id?: string | null
+                }
+                Update: {
+                    currency?: string
+                    id?: string
+                    order_id?: string
+                    price_amount?: number
+                    product_id?: string
+                    product_name?: string
+                    quantity?: number
+                    variant_id?: string | null
+                }
+            }
+            orders: {
+                Row: {
+                    created_at: string
+                    currency: "INR" | "SAR"
+                    email: string
+                    id: string
+                    payment_method: string
+                    payment_status: string
+                    phone: string | null
+                    shipping_address: Json
+                    status: string
+                    total_amount: number
+                    user_id: string | null
+                }
+                Insert: {
+                    created_at?: string
+                    currency: "INR" | "SAR"
+                    email: string
+                    id?: string
+                    payment_method: string
+                    payment_status?: string
+                    phone?: string | null
+                    shipping_address: Json
+                    status?: string
+                    total_amount: number
+                    user_id?: string | null
+                }
+                Update: {
+                    created_at?: string
+                    currency?: "INR" | "SAR"
+                    email?: string
+                    id?: string
+                    payment_method?: string
+                    payment_status?: string
+                    phone?: string | null
+                    shipping_address?: Json
+                    status?: string
+                    total_amount?: number
+                    user_id?: string | null
+                }
+            }
+            posts: {
+                Row: {
+                    author: string | null
+                    content: string | null
+                    cover_image: string | null
+                    created_at: string
+                    excerpt: string | null
+                    id: string
+                    is_published: boolean
+                    published_at: string | null
+                    slug: string
+                    title: string
+                }
+                Insert: {
+                    author?: string | null
+                    content?: string | null
+                    cover_image?: string | null
+                    created_at?: string
+                    excerpt?: string | null
+                    id?: string
+                    is_published?: boolean
+                    published_at?: string | null
+                    slug: string
+                    title: string
+                }
+                Update: {
+                    author?: string | null
+                    content?: string | null
+                    cover_image?: string | null
+                    created_at?: string
+                    excerpt?: string | null
+                    id?: string
+                    is_published?: boolean
+                    published_at?: string | null
+                    slug?: string
+                    title?: string
+                }
+            }
+            product_prices: {
+                Row: {
+                    amount: number
+                    compare_at_amount: number | null
+                    currency: "INR" | "SAR"
+                    id: string
+                    product_id: string
+                    variant_id: string | null
+                }
+                Insert: {
+                    amount: number
+                    compare_at_amount?: number | null
+                    currency: "INR" | "SAR"
+                    id?: string
+                    product_id: string
+                    variant_id?: string | null
+                }
+                Update: {
+                    amount?: number
+                    compare_at_amount?: number | null
+                    currency?: "INR" | "SAR"
+                    id?: string
+                    product_id?: string
+                    variant_id?: string | null
                 }
             }
             product_variants: {
                 Row: {
                     id: string
-                    product_id: string
+                    metadata: Json | null
                     name: string
+                    product_id: string
                     sku: string | null
                     stock: number
-                    metadata: Json | null
                 }
                 Insert: {
                     id?: string
-                    product_id: string
+                    metadata?: Json | null
                     name: string
+                    product_id: string
                     sku?: string | null
                     stock?: number
-                    metadata?: Json | null
                 }
                 Update: {
                     id?: string
-                    product_id?: string
+                    metadata?: Json | null
                     name?: string
+                    product_id?: string
                     sku?: string | null
                     stock?: number
-                    metadata?: Json | null
                 }
             }
-            product_prices: {
+            products: {
                 Row: {
-                    id: string
-                    product_id: string
-                    variant_id: string | null
-                    currency: "INR" | "SAR"
-                    amount: number
-                    compare_at_amount: number | null
-                }
-                Insert: {
-                    id?: string
-                    product_id: string
-                    variant_id?: string | null
-                    currency: "INR" | "SAR"
-                    amount: number
-                    compare_at_amount?: number | null
-                }
-                Update: {
-                    id?: string
-                    product_id?: string
-                    variant_id?: string | null
-                    currency?: "INR" | "SAR"
-                    amount?: number
-                    compare_at_amount?: number | null
-                }
-            }
-            orders: {
-                Row: {
-                    id: string
+                    benefits: string[] | null
+                    category: string | null
                     created_at: string
-                    user_id: string | null
-                    status: string
-                    email: string
-                    phone: string | null
-                    shipping_address: Json
-                    currency: "INR" | "SAR"
-                    total_amount: number
-                    payment_method: string
-                    payment_status: string
-                }
-                Insert: {
-                    id?: string
-                    created_at?: string
-                    user_id?: string | null
-                    status?: string
-                    email: string
-                    phone?: string | null
-                    shipping_address: Json
-                    currency: "INR" | "SAR"
-                    total_amount: number
-                    payment_method: string
-                    payment_status?: string
-                }
-                Update: {
-                    id?: string
-                    created_at?: string
-                    user_id?: string | null
-                    status?: string
-                    email?: string
-                    phone?: string | null
-                    shipping_address?: Json
-                    currency?: "INR" | "SAR"
-                    total_amount?: number
-                    payment_method?: string
-                    payment_status?: string
-                }
-            }
-            order_items: {
-                Row: {
+                    description: string | null
                     id: string
-                    order_id: string
-                    product_id: string
-                    variant_id: string | null
-                    quantity: number
-                    price_amount: number
-                    currency: string
-                    product_name: string
+                    images: string[] | null
+                    ingredients: string[] | null
+                    is_bestseller: boolean
+                    is_new: boolean
+                    metadata: Json | null
+                    name: string
+                    slug: string
+                    tags: string[] | null
                 }
                 Insert: {
+                    benefits?: string[] | null
+                    category?: string | null
+                    created_at?: string
+                    description?: string | null
                     id?: string
-                    order_id: string
-                    product_id: string
-                    variant_id?: string | null
-                    quantity: number
-                    price_amount: number
-                    currency: string
-                    product_name: string
+                    images?: string[] | null
+                    ingredients?: string[] | null
+                    is_bestseller?: boolean
+                    is_new?: boolean
+                    metadata?: Json | null
+                    name: string
+                    slug: string
+                    tags?: string[] | null
                 }
                 Update: {
+                    benefits?: string[] | null
+                    category?: string | null
+                    created_at?: string
+                    description?: string | null
                     id?: string
-                    order_id?: string
-                    product_id?: string
-                    variant_id?: string | null
-                    quantity?: number
-                    price_amount?: number
-                    currency?: string
-                    product_name?: string
+                    images?: string[] | null
+                    ingredients?: string[] | null
+                    is_bestseller?: boolean
+                    is_new?: boolean
+                    metadata?: Json | null
+                    name?: string
+                    slug?: string
+                    tags?: string[] | null
                 }
             }
             profiles: {
                 Row: {
-                    id: string
+                    created_at: string
                     email: string | null
+                    id: string
                     role: "admin" | "customer"
-                    created_at: string
                 }
                 Insert: {
-                    id: string
+                    created_at?: string
                     email?: string | null
+                    id: string
                     role?: "admin" | "customer"
-                    created_at?: string
                 }
                 Update: {
-                    id?: string
+                    created_at?: string
                     email?: string | null
+                    id?: string
                     role?: "admin" | "customer"
-                    created_at?: string
-                }
-            }
-            posts: {
-                Row: {
-                    id: string
-                    created_at: string
-                    title: string
-                    slug: string
-                    content: string | null
-                    excerpt: string | null
-                    author: string | null
-                    is_published: boolean
-                    published_at: string | null
-                    cover_image: string | null
-                }
-                Insert: {
-                    id?: string
-                    created_at?: string
-                    title: string
-                    slug: string
-                    content?: string | null
-                    excerpt?: string | null
-                    author?: string | null
-                    is_published?: boolean
-                    published_at?: string | null
-                    cover_image?: string | null
-                }
-                Update: {
-                    id?: string
-                    created_at?: string
-                    title?: string
-                    slug?: string
-                    content?: string | null
-                    excerpt?: string | null
-                    author?: string | null
-                    is_published?: boolean
-                    published_at?: string | null
-                    cover_image?: string | null
-                }
-            }
-            coupons: {
-                Row: {
-                    id: string
-                    created_at: string
-                    code: string
-                    description: string | null
-                    discount_type: "percentage" | "fixed"
-                    discount_value: number
-                    min_order_amount: number | null
-                    max_discount_amount: number | null
-                    start_date: string | null
-                    expires_at: string | null
-                    is_active: boolean
-                    usage_limit: number | null
-                    usage_count: number
-                }
-                Insert: {
-                    id?: string
-                    created_at?: string
-                    code: string
-                    description?: string | null
-                    discount_type: "percentage" | "fixed"
-                    discount_value: number
-                    min_order_amount?: number | null
-                    max_discount_amount?: number | null
-                    start_date?: string | null
-                    expires_at?: string | null
-                    is_active?: boolean
-                    usage_limit?: number | null
-                    usage_count?: number
-                }
-                Update: {
-                    id?: string
-                    created_at?: string
-                    code?: string
-                    description?: string | null
-                    discount_type?: "percentage" | "fixed"
-                    discount_value?: number
-                    min_order_amount?: number | null
-                    max_discount_amount?: number | null
-                    start_date?: string | null
-                    expires_at?: string | null
-                    is_active?: boolean
-                    usage_limit?: number | null
-                    usage_count?: number
                 }
             }
             wishlists: {
                 Row: {
-                    id: string
                     created_at: string
-                    user_id: string
+                    id: string
                     product_id: string
+                    user_id: string
                 }
                 Insert: {
-                    id?: string
                     created_at?: string
-                    user_id: string
+                    id?: string
                     product_id: string
+                    user_id: string
                 }
                 Update: {
-                    id?: string
                     created_at?: string
-                    user_id?: string
+                    id?: string
                     product_id?: string
+                    user_id?: string
                 }
             }
         }
@@ -317,5 +346,3 @@ export interface Database {
         }
     }
 }
-
-

@@ -1,0 +1,9 @@
+﻿src/components/admin/notification-dialog.tsx(36,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Argument of type '{ title: string; message: string; type: string; user_id: null; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "notifications", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'title' does not exist in type 'never[]'.
+src/components/layout/notification-bell.tsx(48,48): error TS2339: Property 'is_read' does not exist on type 'never'.
+src/components/layout/notification-bell.tsx(73,53): error TS2345: Argument of type '{ is_read: boolean; }' is not assignable to parameter of type 'never'.
+src/services/analytics/analytics.service.ts(42,41): error TS2339: Property 'created_at' does not exist on type 'never'.
+src/services/analytics/analytics.service.ts(47,44): error TS2339: Property 'total_amount' does not exist on type 'never'.

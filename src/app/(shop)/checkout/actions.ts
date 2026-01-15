@@ -141,7 +141,40 @@ export async function placeOrder(prevState: any, formData: FormData) {
     // 2. Get User (if logged in)
     const { data: { user } } = await supabase.auth.getUser();
 
-    // 3. Insert Order
+    // 3. Verify Stock and Decrement
+    // In a real-world scenario, this should be a transaction or a Postgres function to ensure atomicity.
+    // For this implementation, we will check and update in JS (optimistic locking would be better).
+
+    for (const item of items) {
+        if (item.variantId) {
+            // Check Variant Stock
+            const { data: variantData, error: varError } = await supabase
+                .from("product_variants")
+                .select("stock")
+                .eq("id", item.variantId)
+                .single();
+
+            const variant = variantData as { stock: number } | null;
+
+            if (varError || !variant) {
+                return { error: `Product variant not found: ${item.product.name}` };
+            }
+
+            if (variant.stock < item.quantity) {
+                return { error: `Insufficient stock for ${item.product.name}. Only ${variant.stock} left.` };
+            }
+
+            // Decrement
+            await (supabase as any)
+                .from("product_variants")
+                .update({ stock: variant.stock - item.quantity })
+                .eq("id", item.variantId);
+        }
+        // Note: If you had stock on the main 'products' table for non-variant items, handle that here.
+        // Assuming current schema puts physical stock on variants mostly, or we need to check 'products' if no variant.
+    }
+
+    // 4. Insert Order
     const { data: order, error: orderError } = await (supabase as any)
         .from("orders")
         .insert({
@@ -164,7 +197,7 @@ export async function placeOrder(prevState: any, formData: FormData) {
         return { error: "Failed to place order. Please try again." };
     }
 
-    // 4. Insert Order Items (Same as before)
+    // 5. Insert Order Items
     const orderItemsData = items.map((item) => ({
         order_id: order.id,
         product_id: item.product.id,
@@ -184,5 +217,9 @@ export async function placeOrder(prevState: any, formData: FormData) {
         return { error: "Failed to save order items." };
     }
 
+    redirect(`/track?id=${order.id}`); // Redirect to tracking page instead of generic success, or success page that links detailed tracking?
+    // User requested "Checkout" implementation, let's stick to success page if it exists or create one.
+    // The previous code redirected to /checkout/success?orderId=... let's keep that but maybe update the path if track is better.
+    // Actually, redirecting to /checkout/success is standard pattern.
     redirect(`/checkout/success?orderId=${order.id}`);
 }

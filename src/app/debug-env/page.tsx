@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
+import { Database } from "@/types/database.types";
+
 export default async function DebugPage() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -9,11 +11,13 @@ export default async function DebugPage() {
         return <div>Not logged in</div>;
     }
 
-    const { data: profile } = await supabase
+    const { data } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
         .single();
+
+    const profile = data as Database['public']['Tables']['profiles']['Row'] | null;
 
     return (
         <div className="p-8 max-w-2xl mx-auto space-y-4 font-mono text-sm">
