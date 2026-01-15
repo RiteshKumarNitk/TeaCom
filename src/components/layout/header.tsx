@@ -18,18 +18,33 @@ interface Coupon {
 }
 
 export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
-    const [scrolled, setScrolled] = useState(false);
+    const [visible, setVisible] = useState(true);
     const { cartCount, setIsOpen } = useCart();
 
+    // Scroll Logic
     useEffect(() => {
+        let lastScrollY = window.scrollY;
+
         const handleScroll = () => {
-            setScrolled(window.scrollY > 20);
+            const currentScrollY = window.scrollY;
+
+            // Show header if scrolling UP or near TOP
+            // Hide if scrolling DOWN and not at top
+            if (currentScrollY < lastScrollY || currentScrollY < 100) {
+                setVisible(true);
+            } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                setVisible(false);
+            }
+
+            lastScrollY = currentScrollY;
         };
-        window.addEventListener("scroll", handleScroll);
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
     const marqueeContent = coupons.length > 0 ? (
+        // ... same logic loop ...
         coupons.map((coupon) => (
             <span key={coupon.code} className="font-bold">
                 🎫 Use code {coupon.code} for {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`} OFF!
@@ -46,13 +61,17 @@ export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
     );
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-border/50 shadow-sm">
-            {/* Top Bar - Blue */}
+        <header
+            className={cn(
+                "fixed top-0 left-0 right-0 z-40 bg-white border-b border-border/50 shadow-sm transition-transform duration-300 ease-in-out",
+                visible ? "translate-y-0" : "-translate-y-full"
+            )}
+        >
+            {/* Top Bar - Gold/Primary */}
             <div className="bg-primary text-primary-foreground py-2 text-[10px] sm:text-xs font-medium tracking-wide">
                 <div className="container mx-auto px-4 flex justify-between items-center whitespace-nowrap overflow-hidden">
                     <div className="flex gap-4 md:gap-8 animate-marquee sm:animate-none">
                         {marqueeContent}
-                        {/* Repeat for continuous effect if few items */}
                         {coupons.length > 0 && coupons.length < 3 && (
                             <>
                                 <span>•</span>
@@ -62,8 +81,8 @@ export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
                     </div>
                 // ... rest of header ...
                     <div className="hidden md:flex gap-4">
-                        <Link href="/track" className="hover:text-yellow-300 transition-colors">Track Order</Link>
-                        <Link href="/contact" className="hover:text-yellow-300 transition-colors">Contact Us</Link>
+                        <Link href="/track" className="hover:text-yellow-100 transition-colors">Track Order</Link>
+                        <Link href="/contact" className="hover:text-yellow-100 transition-colors">Contact Us</Link>
                     </div>
                 </div>
             </div>
@@ -83,20 +102,20 @@ export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
                     </div>
 
                     {/* Desktop Search (Left) */}
-                    <div className="hidden lg:flex flex-1 max-w-xs relative bg-muted/30 rounded-full">
+                    <div className="hidden lg:flex flex-1 max-w-xs relative bg-muted/50 rounded-full border border-transparent focus-within:border-primary/20 transition-all">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Search tea..."
-                            className="bg-transparent border-none text-sm w-full pl-9 pr-4 py-2 focus:ring-0 placeholder:text-muted-foreground/50"
+                            className="bg-transparent border-none text-sm w-full pl-9 pr-4 py-2 focus:ring-0 placeholder:text-muted-foreground/50 outline-none"
                         />
                     </div>
 
                     {/* Logo (Center) */}
                     <Link href="/" className="flex-shrink-0 flex items-center justify-center gap-2 lg:absolute lg:left-1/2 lg:-translate-x-1/2">
                         <div className="flex flex-col items-center">
-                            <span className="text-2xl pt-1 md:text-3xl font-bold font-sans tracking-tight text-primary">BLUE TEA</span>
-                            {/* Small tagline if needed */}
+                            <span className="text-2xl pt-1 md:text-3xl font-bold font-display tracking-tight text-primary drop-shadow-sm">Hi Storm Tea</span>
+                            <span className="text-[0.6rem] uppercase tracking-widest text-muted-foreground">Premium Tea Collection</span>
                         </div>
                     </Link>
 
@@ -128,7 +147,7 @@ export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
             </div>
 
             {/* Navbar (Bottom) */}
-            <div className="border-t border-border/30 hidden lg:block">
+            <div className="border-t border-border/30 hidden lg:block bg-background/95 backdrop-blur-sm">
                 <div className="container mx-auto px-4">
                     <nav className="flex justify-center items-center gap-8 py-3 text-xs md:text-sm font-semibold tracking-wide text-foreground/80">
                         <NavLink href="/shop?sort=bestseller">BESTSELLER</NavLink>

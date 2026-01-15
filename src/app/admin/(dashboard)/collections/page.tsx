@@ -1,15 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import Link from "next/link";
+
 export const dynamic = "force-dynamic";
 
 export default async function CollectionsPage() {
-    const supabase = await createClient();
 
-    const { data: collections, error } = await (supabase as any)
+    const { data: collections, error } = await (supabaseAdmin as any)
         .from("collections")
         .select("*")
         .order("created_at", { ascending: false });
@@ -22,7 +23,9 @@ export default async function CollectionsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-serif font-bold text-gray-900">Collections</h1>
-                <Button>+ New Collection</Button>
+                <Link href="/admin/collections/new">
+                    <Button>+ New Collection</Button>
+                </Link>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

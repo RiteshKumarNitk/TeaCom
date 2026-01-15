@@ -2,6 +2,22 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+
+export async function getUserAddresses() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("is_default", { ascending: false });
+
+    return data || [];
+}
+
+
 import { redirect } from "next/navigation";
 
 export async function validateCoupon(code: string) {

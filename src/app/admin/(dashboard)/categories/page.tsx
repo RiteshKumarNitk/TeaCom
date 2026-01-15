@@ -1,14 +1,15 @@
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import Link from "next/link";
+
 export const dynamic = "force-dynamic";
 
 export default async function CategoriesPage() {
-    const supabase = await createClient();
 
-    const { data: categories, error } = await (supabase as any)
+    const { data: categories, error } = await (supabaseAdmin as any)
         .from("categories")
         .select("*")
         .order("created_at", { ascending: false });
@@ -21,7 +22,9 @@ export default async function CategoriesPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-serif font-bold text-gray-900">Categories</h1>
-                <Button>+ New Category</Button>
+                <Link href="/admin/categories/new">
+                    <Button>+ New Category</Button>
+                </Link>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

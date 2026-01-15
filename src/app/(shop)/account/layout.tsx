@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Package, Heart, LogOut, MapPin } from "lucide-react";
+import { User, Package, Heart, LogOut, MapPin, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signout } from "@/app/(shop)/auth/actions";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-    { href: "/account", label: "Dashboard", icon: User },
+    { href: "/account", label: "Dashboard", icon: LayoutDashboard },
     { href: "/account/orders", label: "Orders", icon: Package },
     { href: "/wishlist", label: "Wishlist", icon: Heart },
     { href: "/account/addresses", label: "Addresses", icon: MapPin },
+    { href: "/account/profile", label: "Profile", icon: User },
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {

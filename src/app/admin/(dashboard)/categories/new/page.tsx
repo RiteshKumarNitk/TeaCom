@@ -2,10 +2,11 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { createCoupon } from "./actions";
+import { createCategory } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
@@ -16,71 +17,76 @@ function SubmitButton() {
 
     return (
         <Button type="submit" disabled={pending}>
-            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Coupon"}
+            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Category"}
         </Button>
     );
 }
 
 const initialState = {
     error: "",
+    success: false
 };
 
-export default function NewCouponPage() {
-    const [state, formAction] = useActionState(createCoupon, initialState);
+export default function NewCategoryPage() {
+    const [state, formAction] = useActionState(createCategory, initialState);
 
     return (
         <div className="space-y-6 max-w-2xl mx-auto">
             <div className="flex items-center gap-4">
-                <Link href="/admin/coupons">
+                <Link href="/admin/categories">
                     <Button variant="ghost" size="icon">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
-                <h1 className="text-2xl font-serif font-bold tracking-tight">Create New Coupon</h1>
+                <h1 className="text-2xl font-serif font-bold tracking-tight">Create New Category</h1>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Coupon Details</CardTitle>
+                    <CardTitle>Category Details</CardTitle>
                     <CardDescription>
-                        Create a discount code for your customers.
+                        Organize your products into categories.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form action={formAction} className="space-y-6">
                         <div className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="code">Code</Label>
+                                <Label htmlFor="name">Name</Label>
                                 <Input
-                                    id="code"
-                                    name="code"
-                                    placeholder="e.g. SUMMER2026"
-                                    className="uppercase font-mono"
+                                    id="name"
+                                    name="name"
+                                    placeholder="e.g. Green Tea"
                                     required
-                                    minLength={3}
                                 />
-                                <p className="text-xs text-muted-foreground">The code customers will enter at checkout.</p>
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="discount_percent">Discount Percentage (%)</Label>
+                                <Label htmlFor="slug">Slug</Label>
                                 <Input
-                                    id="discount_percent"
-                                    name="discount_percent"
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    placeholder="20"
+                                    id="slug"
+                                    name="slug"
+                                    placeholder="e.g. green-tea"
                                     required
                                 />
+                                <p className="text-xs text-muted-foreground">URL friendly identifier.</p>
                             </div>
 
                             <div className="grid gap-2">
                                 <Label htmlFor="description">Description</Label>
-                                <Input
+                                <Textarea
                                     id="description"
                                     name="description"
-                                    placeholder="Summer Sale Discount"
+                                    placeholder="Description for this category..."
+                                />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="image_url">Image URL</Label>
+                                <Input
+                                    id="image_url"
+                                    name="image_url"
+                                    placeholder="https://..."
                                 />
                             </div>
 
@@ -96,10 +102,8 @@ export default function NewCouponPage() {
                             </div>
                         )}
 
-
-
                         <div className="flex justify-end gap-3">
-                            <Link href="/admin/coupons">
+                            <Link href="/admin/categories">
                                 <Button variant="outline" type="button">Cancel</Button>
                             </Link>
                             <SubmitButton />

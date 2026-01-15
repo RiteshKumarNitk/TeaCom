@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -8,30 +8,70 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { updateOrderStatus, updateOrderTracking } from "../actions"; // We'll adjust import path
 import { Badge } from "@/components/ui/badge";
+import { ExportActions } from "./export-actions";
+import { AlertCircle } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const supabase = await createClient();
 
-    // 1. Fetch Order with Items & Profile
-    // We cast to 'any' for the join to avoid complex TS mapping of generic joins
-    const { data: order, error } = await (supabase as any)
+    // 1. Fetch Order (No Joins to avoid schema relationship errors)
+    const { data: orderData, error: orderError } = await (supabaseAdmin as any)
         .from("orders")
-        .select(`
-            *,
-            order_items (*),
-            profiles:user_id (*)
-        `)
+        .select("*")
         .eq("id", id)
         .single();
 
-    if (error || !order) {
-        notFound();
+    if (orderError || !orderData) {
+        const error = orderError;
+        // ... error UI (kept same) ...
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+                <div className="bg-destructive/10 p-4 rounded-full">
+                    <AlertCircle className="w-12 h-12 text-destructive" />
+                </div>
+                <h2 className="text-xl font-bold">Failed to load order</h2>
+                <div className="max-w-md text-center text-muted-foreground">
+                    <p className="mb-2">We couldn't find order ID: <code className="bg-muted px-1 rounded text-xs">{id}</code></p>
+                    <div className="bg-slate-900 text-slate-50 text-xs p-4 rounded text-left overflow-auto font-mono">
+                        {error ? error.message : "No data returned"}
+                    </div>
+                </div>
+                <div className="text-sm bg-yellow-50 text-yellow-800 p-4 rounded-md max-w-lg border border-yellow-200">
+                    <strong>Troubleshooting:</strong> If you see "No data returned", it means the Admin Client lacks the Service Role Key.
+                    Please ensure valid <code>SUPABASE_SERVICE_ROLE_KEY</code> is in your <code>.env</code> file.
+                </div>
+                <Button asChild variant="outline">
+                    <a href="/admin/orders">Back to Orders</a>
+                </Button>
+            </div>
+        );
     }
 
-    // 2. Compute timeline mock (later we can fetch audit logs for this order specifically)
+    // 2. Fetch Order Items Separately
+    const { data: orderItems } = await (supabaseAdmin as any)
+        .from("order_items")
+        .select("*")
+        .eq("order_id", orderData.id);
+
+    // 3. Fetch Profile Separately
+    let profile: any = null;
+    if (orderData.user_id) {
+        const { data: p } = await (supabaseAdmin as any)
+            .from("profiles")
+            .select("*")
+            .eq("id", orderData.user_id)
+            .single();
+        profile = p;
+    }
+
+    // Combine data
+    const order = {
+        ...orderData,
+        order_items: orderItems || []
+    };
+
     const timeline = [
         { status: "pending", date: order.created_at, label: "Order Placed" },
         // We'd ideally query audit logs here to get real timestamps for other statuses
@@ -42,14 +82,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-6">
                 <div>
-                    <h1 className="text-3xl font-serif font-bold flex items-center gap-3">
-                        Order <span className="text-muted-foreground font-mono text-xl">#{order.id.slice(0, 8)}</span>
-                    </h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-serif font-bold flex items-center gap-3">
+                            Order <span className="text-muted-foreground font-mono text-xl">#{order.id.slice(0, 8)}</span>
+                        </h1>
+                        <StatusBadge status={order.status} className="text-sm px-3 py-0.5" />
+                    </div>
                     <p className="text-muted-foreground mt-1">
                         Placed on {format(new Date(order.created_at), "PPP p")}
                     </p>
                 </div>
-                <StatusBadge status={order.status} className="text-lg px-4 py-1" />
+                <div className="flex gap-2">
+                    <ExportActions order={order} />
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -57,15 +102,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <div className="lg:col-span-2 space-y-8">
                     {/* Items Table */}
                     <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-                        <div className="p-6 border-b bg-gray-50/50">
-                            <h2 className="font-semibold text-lg">Order Items ({order.order_items.length})</h2>
+                        <div className="p-6 border-b bg-gray-50/50 flex justify-between items-center">
+                            <h2 className="font-semibold text-lg text-gray-900">Items Ordered</h2>
+                            <Badge variant="secondary" className="font-mono text-xs">{order.order_items.length} items</Badge>
                         </div>
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Product</TableHead>
-                                    <TableHead className="text-right">Price</TableHead>
-                                    <TableHead className="text-center">Qty</TableHead>
+                                    <TableHead className="w-[50%]">Product Details</TableHead>
+                                    <TableHead className="text-right">Unit Price</TableHead>
+                                    <TableHead className="text-center">Quantity</TableHead>
                                     <TableHead className="text-right">Total</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -73,65 +119,122 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                                 {order.order_items.map((item: any) => (
                                     <TableRow key={item.id}>
                                         <TableCell>
-                                            <div className="font-medium">{item.product_name}</div>
-                                            {item.variant_id && (
-                                                <div className="text-xs text-muted-foreground">Variant ID: {item.variant_id}</div>
-                                            )}
+                                            <div className="flex gap-3 items-start">
+                                                {/* Placeholder for Product Image if available in future join */}
+                                                <div className="w-10 h-10 bg-gray-100 rounded-md border flex-shrink-0" />
+                                                <div>
+                                                    <div className="font-medium text-gray-900">{item.product_name}</div>
+                                                    {item.variant_id && (
+                                                        <div className="text-xs text-muted-foreground font-mono mt-0.5">Variant: {item.variant_id.split('-')[0]}...</div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right text-gray-600">
                                             {item.currency} {item.price_amount}
                                         </TableCell>
-                                        <TableCell className="text-center">{item.quantity}</TableCell>
-                                        <TableCell className="text-right font-semibold">
-                                            {item.currency} {item.price_amount * item.quantity}
+                                        <TableCell className="text-center text-gray-900 font-medium">{item.quantity}</TableCell>
+                                        <TableCell className="text-right font-bold text-gray-900">
+                                            {item.currency} {(item.price_amount * item.quantity).toFixed(2)}
                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
-                        <div className="p-6 bg-gray-50/50 flex justify-end gap-3 items-center">
-                            <span className="text-muted-foreground">Subtotal:</span>
-                            <span className="text-2xl font-bold">{order.currency} {order.total_amount}</span>
+
+                        {/* Order Summary Footer */}
+                        <div className="p-6 bg-gray-50/50 space-y-3 border-t">
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Subtotal</span>
+                                <span>{order.currency} {order.total_amount}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Shipping</span>
+                                <span className="text-green-600">Free</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                                <span className="font-bold text-gray-900">Total Paid</span>
+                                <span className="text-2xl font-serif font-bold text-gray-900">{order.currency} {order.total_amount}</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Customer & Address */}
+                    {/* Customer & Shipping Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white border rounded-xl p-6 shadow-sm">
-                            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                📦 Shipping Address
-                            </h3>
-                            <div className="text-sm space-y-1 text-gray-600">
-                                <p className="font-medium text-gray-900">{order.shipping_address?.fullName}</p>
-                                <p>{order.shipping_address?.addressLine1}</p>
-                                <p>{order.shipping_address?.city}, {order.shipping_address?.state}</p>
-                                <p>{order.shipping_address?.postalCode}</p>
-                                <p className="uppercase text-xs font-bold text-gray-400 mt-2">{order.shipping_address?.country}</p>
+                        {/* Shipping Address Card */}
+                        <div className="bg-white border rounded-xl shadow-sm flex flex-col">
+                            <div className="p-5 border-b bg-gray-50/30">
+                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <span>📍</span> Shipping Address
+                                </h3>
+                            </div>
+                            <div className="p-5 flex-1 text-sm text-gray-600 space-y-1">
+                                {order.shipping_address ? (
+                                    <>
+                                        <div className="font-bold text-lg text-gray-900 mb-2">{order.shipping_address.fullName}</div>
+                                        <div className="leading-relaxed">
+                                            {order.shipping_address.addressLine1}
+                                            <br />
+                                            {order.shipping_address.city}, {order.shipping_address.state}
+                                            <br />
+                                            {order.shipping_address.postalCode}
+                                        </div>
+                                        <div className="mt-3 pt-3 border-t flex items-center gap-2">
+                                            <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Country</span>
+                                            <span className="font-medium text-gray-900">{order.shipping_address.country}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-muted-foreground italic py-4">No shipping address recorded.</div>
+                                )}
                             </div>
                         </div>
 
-                        <div className="bg-white border rounded-xl p-6 shadow-sm">
-                            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                👤 Customer Profile
-                            </h3>
-                            <div className="text-sm space-y-2">
-                                <div className="grid grid-cols-[80px_1fr]">
-                                    <span className="text-muted-foreground">Name:</span>
-                                    <span className="font-medium">{order.shipping_address?.fullName}</span>
+                        {/* Customer Contact Card */}
+                        <div className="bg-white border rounded-xl shadow-sm flex flex-col">
+                            <div className="p-5 border-b bg-gray-50/30">
+                                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                    <span>👤</span> Customer Profile
+                                </h3>
+                            </div>
+                            <div className="p-5 flex-1 space-y-4">
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1">Name</label>
+                                    <div className="font-medium text-gray-900">
+                                        {profile?.full_name || order.shipping_address?.fullName || "Guest"}
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-[80px_1fr]">
-                                    <span className="text-muted-foreground">Email:</span>
-                                    <span>{order.email}</span>
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1">Email Address</label>
+                                    <a href={`mailto:${order.email}`} className="text-primary hover:underline font-medium break-all">
+                                        {order.email}
+                                    </a>
                                 </div>
-                                <div className="grid grid-cols-[80px_1fr]">
-                                    <span className="text-muted-foreground">Phone:</span>
-                                    <span>{order.phone || "-"}</span>
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1">Phone Number</label>
+                                    <div className="font-medium text-gray-900">
+                                        {/* Use profile phone if available, else order phone, else - */}
+                                        {profile?.phone || order.phone ? (
+                                            <a href={`tel:${profile?.phone || order.phone}`} className="hover:text-primary">
+                                                {profile?.phone || order.phone}
+                                            </a>
+                                        ) : (
+                                            <span className="text-muted-foreground italic">Not provided</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-[80px_1fr]">
-                                    <span className="text-muted-foreground">User ID:</span>
-                                    <span className="font-mono text-xs truncate" title={order.user_id || "Guest"}>
-                                        {order.user_id ? order.user_id.slice(0, 8) + '...' : 'Guest'}
-                                    </span>
+                                <div>
+                                    <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1">User Status</label>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className="capitalize">
+                                            {order.user_id ? "Registered Member" : "Guest Checkout"}
+                                        </Badge>
+                                        {order.user_id && (
+                                            <span className="text-xs text-muted-foreground font-mono" title={order.user_id}>
+                                                ID: {order.user_id.slice(0, 8)}...
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -143,13 +246,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     {/* Status Card */}
                     <div className="bg-white border rounded-xl p-6 shadow-sm ring-1 ring-black/5">
                         <h3 className="font-semibold mb-4">Update Status</h3>
-                        <form action={async () => {
-                            "use server";
-                            // We need a JS handler to capture the select value if we use a native select
-                            // or better, distinct buttons for workflow steps
-                        }} className="space-y-4">
+                        <div className="space-y-4">
                             <OrderWorkflowActions orderId={order.id} status={order.status} />
-                        </form>
+                        </div>
                     </div>
 
                     {/* Fulfillment Card */}
@@ -234,9 +333,7 @@ function OrderWorkflowActions({ orderId, status }: { orderId: string, status: st
         shipped: [
             { label: "Mark Delivered", status: "delivered" }
         ],
-        delivered: [
-            { label: "Process Return", status: "returned", variant: "secondary" }
-        ],
+        delivered: [],
         returned: [
             { label: "Refund Order", status: "refunded", variant: "outline" }
         ],

@@ -16,32 +16,33 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
     return (
         <div className="container mx-auto px-4 py-32">
-            <div className="flex flex-col md:flex-row justify-between items-baseline mb-8">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-12 border-b pb-8">
                 <div>
-                    <h1 className="text-4xl font-serif font-bold mb-2">
-                        {category ? `${category} Tea` : "Shop All Tea"}
+                    <h1 className="text-4xl md:text-5xl font-display font-bold mb-3 text-primary">
+                        {category ? `${category} Tea` : "Our Collection"}
                     </h1>
-                    <p className="text-muted-foreground">Discover our complete collection of premium organic teas.</p>
+                    <p className="text-muted-foreground max-w-lg text-lg">
+                        Discover our hand-picked selection of premium organic teas, sourced directly from the finest estates.
+                    </p>
                 </div>
 
-                {/* Sort/Filter Controls */}
-                <div className="flex flex-wrap gap-4 items-center">
-                    <span className="text-sm font-medium text-muted-foreground">
-                        {products.length} Products
-                    </span>
-
-                    {/* Basic Category Links */}
-                    <div className="flex gap-2 text-sm">
-                        <a href="/shop" className={`px-3 py-1 rounded-full border ${!category ? 'bg-primary text-white border-primary' : 'hover:bg-muted'}`}>All</a>
-                        <a href="/shop?category=Black" className={`px-3 py-1 rounded-full border ${category === 'Black' ? 'bg-primary text-white border-primary' : 'hover:bg-muted'}`}>Black</a>
-                        <a href="/shop?category=Green" className={`px-3 py-1 rounded-full border ${category === 'Green' ? 'bg-primary text-white border-primary' : 'hover:bg-muted'}`}>Green</a>
-                        <a href="/shop?category=Wellness" className={`px-3 py-1 rounded-full border ${category === 'Wellness' ? 'bg-primary text-white border-primary' : 'hover:bg-muted'}`}>Wellness</a>
+                {/* Controls */}
+                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    {/* Category Pills */}
+                    <div className="flex flex-wrap gap-2">
+                        <FilterPill href="/shop" active={!category} label="All" />
+                        <FilterPill href="/shop?category=Black" active={category === 'Black'} label="Black Tea" />
+                        <FilterPill href="/shop?category=Green" active={category === 'Green'} label="Green Tea" />
+                        <FilterPill href="/shop?category=Wellness" active={category === 'Wellness'} label="Wellness" />
+                        <FilterPill href="/shop?sort=bestseller" active={sort === 'price_desc'} label="Best Sellers" />
                     </div>
                 </div>
             </div>
 
+            {/* Product Grid */}
             {products.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10 lg:gap-x-8 lg:gap-y-12">
                     {products.map((product) => (
                         <ProductCard key={product.id} product={product} />
                     ))}
@@ -54,4 +55,21 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             )}
         </div>
     );
+}
+
+function FilterPill({ href, active, label }: { href: string, active: boolean, label: string }) {
+    return (
+        <a
+            href={href}
+            className={`
+                px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border
+                ${active
+                    ? 'bg-primary text-primary-foreground border-primary shadow-md scale-105'
+                    : 'bg-white text-muted-foreground border-transparent hover:border-border hover:bg-muted'
+                }
+            `}
+        >
+            {label}
+        </a>
+    )
 }

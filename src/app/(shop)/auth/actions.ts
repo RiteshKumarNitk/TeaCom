@@ -8,6 +8,7 @@ import { AuthError } from "@supabase/supabase-js";
 import { z } from "zod";
 
 const authSchema = z.object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email(),
     password: z.string().min(6),
 });
@@ -16,7 +17,13 @@ export async function login(prevState: any, formData: FormData) {
     const supabase = await createClient();
 
     const data = Object.fromEntries(formData);
-    const parsed = authSchema.safeParse(data);
+    // For login, we only validate email and password
+    const loginSchema = z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+    });
+
+    const parsed = loginSchema.safeParse(data);
 
     if (!parsed.success) {
         return { error: "Invalid email or password format." };
@@ -32,12 +39,6 @@ export async function login(prevState: any, formData: FormData) {
     }
 
     // Check for admin role to redirect appropriately
-    // We need to fetch the role for the *just logged in* user.
-    // Since we are on the server, getAdminRole() will fetch the user from the current session context.
-    // However, we just signed in, so we might need to rely on the session being set.
-    // updateSession middleware should handle the token refresh, but let's see.
-
-    // Dynamic import to avoid circular dependency if any (though unlikely here)
     const { getAdminRole } = await import("@/lib/admin/auth");
     const role = await getAdminRole();
 
@@ -57,12 +58,17 @@ export async function signup(prevState: any, formData: FormData) {
     const parsed = authSchema.safeParse(data);
 
     if (!parsed.success) {
-        return { error: "Invalid email or password format." };
+        return { error: parsed.error.issues[0].message };
     }
 
     const { error } = await supabase.auth.signUp({
         email: parsed.data.email,
         password: parsed.data.password,
+        options: {
+            data: {
+                full_name: parsed.data.name,
+            },
+        },
     });
 
     if (error) {
