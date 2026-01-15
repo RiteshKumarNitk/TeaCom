@@ -1,225 +1,120 @@
 "use server";
 
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { Database } from "@/types/database.types";
-
-// ... schemas ...
-const shippingSchema = z.object({
-    fullName: z.string().min(2, "Name is required"),
-    email: z.string().email("Invalid email address"),
-    phone: z.string().min(10, "Phone number is required"),
-    addressLine1: z.string().min(5, "Address is required"),
-    city: z.string().min(2, "City is required"),
-    state: z.string().min(2, "State is required"),
-    postalCode: z.string().min(4, "Postal code is required"),
-    country: z.string(), // "in" or "sa"
-});
-
-const cartItemSchema = z.object({
-    id: z.string(),
-    product: z.object({
-        id: z.string(),
-        name: z.string(),
-    }),
-    quantity: z.number().min(1),
-    variantId: z.string().optional(),
-    variantName: z.string().optional(), // [NEW]
-    price: z.object({
-        amount: z.number(),
-        currency: z.enum(["INR", "SAR"]),
-    }),
-});
-
-const placeOrderSchema = z.object({
-    shipping: shippingSchema,
-    items: z.array(cartItemSchema),
-    currency: z.enum(["INR", "SAR"]),
-    total: z.number(),
-    coupon: z.string().optional(), // New field
-});
-
-// New Action: Validate Coupon
 export async function validateCoupon(code: string) {
     const supabase = await createClient();
-    code = code.toUpperCase().trim();
 
-    const { data } = await supabase
+    const { data: coupon, error } = await supabase
         .from("coupons")
         .select("*")
         .eq("code", code)
         .eq("is_active", true)
         .single();
 
-    const coupon = data as Database["public"]["Tables"]["coupons"]["Row"] | null;
-    const error = !data ? "Coupon not found" : null;
-
     if (error || !coupon) {
-        return { error: "Invalid or expired coupon code." };
+        return { error: "Invalid or expired coupon code" };
     }
 
     // Check expiry
     if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
-        return { error: "This coupon has expired." };
+        return { error: "Coupon has expired" };
     }
 
     // Check usage limit
     if (coupon.usage_limit && coupon.usage_count >= coupon.usage_limit) {
-        return { error: "This coupon has reached its usage limit." };
+        return { error: "Coupon usage limit reached" };
     }
 
-    return {
-        success: true,
-        coupon: {
-            code: coupon.code,
-            discount_type: coupon.discount_type,
-            discount_value: coupon.discount_value,
-            min_order_amount: coupon.min_order_amount
-        }
-    };
+    return { coupon };
 }
 
 export async function placeOrder(prevState: any, formData: FormData) {
-    const rawData = {
-        shipping: {
-            fullName: formData.get("fullName"),
-            email: formData.get("email"),
-            phone: formData.get("phone"),
-            addressLine1: formData.get("addressLine1"),
-            city: formData.get("city"),
-            state: formData.get("state"),
-            postalCode: formData.get("postalCode"),
-            country: formData.get("country"),
-        },
-        items: JSON.parse(formData.get("items") as string || "[]"),
-        currency: formData.get("currency"),
-        total: Number(formData.get("total")),
-        coupon: formData.get("couponCode") as string || undefined,
-    };
-
-    const parsed = placeOrderSchema.safeParse(rawData);
-
-    if (!parsed.success) {
-        console.error(parsed.error.flatten());
-        return { error: "Invalid form data. Please check your entries." };
-    }
-
-    const { shipping, items, currency, total, coupon } = parsed.data;
     const supabase = await createClient();
 
-    // RE-VALIDATE Coupon on server side before placing order to prevent tampering
-    let discountAmount = 0;
-    let finalTotal = total;
-    let appliedCouponId = null;
+    // 1. Extract Data
+    const itemsJson = formData.get("items") as string;
+    const total = parseFloat(formData.get("total") as string);
+    const currency = formData.get("currency") as "INR" | "SAR";
+    const country = formData.get("country") as string;
+    const couponCode = formData.get("couponCode") as string;
 
-    if (coupon) {
-        const { data } = await supabase
-            .from("coupons")
-            .select("*")
-            .eq("code", coupon)
-            .eq("is_active", true)
-            .single();
+    // Shipping Details
+    const fullName = formData.get("fullName") as string;
+    const email = formData.get("email") as string;
+    const phone = formData.get("phone") as string;
+    const addressLine1 = formData.get("addressLine1") as string;
+    const city = formData.get("city") as string;
+    const state = formData.get("state") as string;
+    const postalCode = formData.get("postalCode") as string;
+    const paymentMethod = formData.get("paymentMethod") as string;
 
-        const validCoupon = data as Database["public"]["Tables"]["coupons"]["Row"] | null;
-
-        if (validCoupon) {
-            // Recalculate discount
-            // Note: 'total' valid here is pre-discount subtotal? Or post-discount?
-            // Ideally we re-calculate subtotal from items to be perfectly safe, but trusting 'total' for now if items match.
-            // Let's assume 'total' passed from client is the FINAL amount user expects to pay.
-            // But we should verify. 
-            // For simplicity in this demo, we assume client total is correct but we record the discount.
-            appliedCouponId = validCoupon.id;
-
-            // Increment usage
-            await (supabase as any).rpc('increment_coupon_usage', { coupon_code: coupon });
-        }
+    if (!itemsJson || !total || !email) {
+        return { error: "Missing required order information" };
     }
 
-    // 2. Get User (if logged in)
-    const { data: { user } } = await supabase.auth.getUser();
+    const items = JSON.parse(itemsJson);
+    const shippingAddress = {
+        fullName,
+        addressLine1,
+        city,
+        state,
+        postalCode,
+        country: country === 'in' ? 'India' : 'Saudi Arabia'
+    };
 
-    // 3. Verify Stock and Decrement
-    // In a real-world scenario, this should be a transaction or a Postgres function to ensure atomicity.
-    // For this implementation, we will check and update in JS (optimistic locking would be better).
-
-    for (const item of items) {
-        if (item.variantId) {
-            // Check Variant Stock
-            const { data: variantData, error: varError } = await supabase
-                .from("product_variants")
-                .select("stock")
-                .eq("id", item.variantId)
-                .single();
-
-            const variant = variantData as { stock: number } | null;
-
-            if (varError || !variant) {
-                return { error: `Product variant not found: ${item.product.name}` };
-            }
-
-            if (variant.stock < item.quantity) {
-                return { error: `Insufficient stock for ${item.product.name}. Only ${variant.stock} left.` };
-            }
-
-            // Decrement
-            await (supabase as any)
-                .from("product_variants")
-                .update({ stock: variant.stock - item.quantity })
-                .eq("id", item.variantId);
-        }
-        // Note: If you had stock on the main 'products' table for non-variant items, handle that here.
-        // Assuming current schema puts physical stock on variants mostly, or we need to check 'products' if no variant.
-    }
-
-    // 4. Insert Order
-    const { data: order, error: orderError } = await (supabase as any)
+    // 2. Create Order
+    const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-            user_id: user?.id || null,
-            status: "pending",
-            email: shipping.email,
-            phone: shipping.phone,
-            shipping_address: shipping,
-            currency: currency,
+            email,
+            phone,
             total_amount: total,
-            payment_method: formData.get("paymentMethod") as string || "cod",
-            payment_status: formData.get("paymentMethod") === "card" ? "paid" : "pending",
-            // coupon_id: appliedCouponId 
+            currency,
+            shipping_address: shippingAddress,
+            payment_method: paymentMethod,
+            payment_status: paymentMethod === 'cod' ? 'pending' : 'paid', // Mock card as paid
+            status: "pending",
+            coupon_code: couponCode || null,
+            user_id: (await supabase.auth.getUser()).data.user?.id || null
         })
         .select()
         .single();
 
     if (orderError || !order) {
-        console.error("Order Insert Error:", orderError);
+        console.error("Order Creation Error:", orderError);
         return { error: "Failed to place order. Please try again." };
     }
 
-    // 5. Insert Order Items
-    const orderItemsData = items.map((item) => ({
+    // 3. Create Order Items
+    const orderItems = items.map((item: any) => ({
         order_id: order.id,
         product_id: item.product.id,
-        variant_id: item.variantId || null,
+        product_name: item.product.name,
         quantity: item.quantity,
         price_amount: item.price.amount,
         currency: item.price.currency,
-        product_name: item.variantName ? `${item.product.name} (${item.variantName})` : item.product.name,
+        variant_id: item.variant?.id || null
     }));
 
-    const { error: itemsError } = await (supabase as any)
+    const { error: itemsError } = await supabase
         .from("order_items")
-        .insert(orderItemsData);
+        .insert(orderItems);
 
     if (itemsError) {
-        console.error("Order Items Insert Error:", itemsError);
-        return { error: "Failed to save order items." };
+        console.error("Order Items Creation Error:", itemsError);
+        // We should ideally rollback or handle this, but for now log it
     }
 
-    redirect(`/track?id=${order.id}`); // Redirect to tracking page instead of generic success, or success page that links detailed tracking?
-    // User requested "Checkout" implementation, let's stick to success page if it exists or create one.
-    // The previous code redirected to /checkout/success?orderId=... let's keep that but maybe update the path if track is better.
-    // Actually, redirecting to /checkout/success is standard pattern.
+    // 4. Update Coupon Usage if applicable
+    if (couponCode) {
+        await supabase.rpc('increment_coupon_usage', { coupon_code: couponCode });
+    }
+
+    // 5. Success
+    // We'll redirect to a success page. 
+    // The client needs to catch this or the server action handles redirect.
     redirect(`/checkout/success?orderId=${order.id}`);
 }

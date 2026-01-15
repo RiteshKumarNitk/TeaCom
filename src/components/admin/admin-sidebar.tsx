@@ -2,24 +2,46 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingBag, Package, LogOut, Settings, Users, Ticket, BookOpen, BarChart } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, LogOut, Settings, Users, Ticket, BookOpen, BarChart, Undo2, BoxSelect, Library, ClipboardList, AlertTriangle, Megaphone, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export function AdminSidebar({ onSignOut }: { onSignOut: () => Promise<void> }) {
+import { AdminRole, PERMISSIONS, ROUTE_PERMISSIONS } from "@/types/admin";
+
+export function AdminSidebar({
+    role,
+    onSignOut
+}: {
+    role: AdminRole;
+    onSignOut: () => Promise<void>
+}) {
     const pathname = usePathname();
 
-    const navItems = [
+    const allNavItems = [
         { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
         { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+        { href: "/admin/returns", label: "Returns", icon: Undo2 },
         { href: "/admin/products", label: "Products", icon: Package },
+        { href: "/admin/inventory", label: "Inventory", icon: AlertTriangle },
+        { href: "/admin/categories", label: "Categories", icon: BoxSelect },
+        { href: "/admin/collections", label: "Collections", icon: Library },
         { href: "/admin/coupons", label: "Coupons", icon: Ticket },
-        { href: "/admin/blog", label: "Blog", icon: BookOpen },
         { href: "/admin/customers", label: "Customers", icon: Users },
+        { href: "/admin/staff", label: "Staff", icon: Shield },
+        { href: "/admin/marketing", label: "Marketing", icon: Megaphone },
+        { href: "/admin/settings", label: "Settings", icon: Settings },
+        { href: "/admin/logs", label: "Audit Logs", icon: ClipboardList },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart },
-        // Future additions
-        // { href: "/admin/settings", label: "Settings", icon: Settings },
     ];
+
+    // Filter items based on permissions
+    const navItems = allNavItems.filter((item) => {
+        const permission = ROUTE_PERMISSIONS[item.href];
+        if (!permission) return true; // Show by default if no mapping
+
+        const allowedRoles = PERMISSIONS[permission] as readonly string[];
+        return allowedRoles.includes(role);
+    });
 
     return (
         <aside className="w-64 bg-[#0B1C3E] text-white flex flex-col shadow-xl">

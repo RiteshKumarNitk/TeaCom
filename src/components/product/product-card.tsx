@@ -97,9 +97,12 @@ export function ProductCard({ product }: ProductCardProps) {
                 {/* Product Image */}
                 {product.images && product.images[0] ? (
                     <img
-                        src={product.images[0]}
+                        src={product.images[0].startsWith("http") || product.images[0].startsWith("/") ? product.images[0] : `/${product.images[0]}`}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out"
+                        onError={(e) => {
+                            e.currentTarget.src = "https://placehold.co/400x500/e2e8f0/64748b?text=Tea+Image";
+                        }}
                     />
                 ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">

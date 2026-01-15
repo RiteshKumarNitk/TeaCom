@@ -31,7 +31,22 @@ export async function login(prevState: any, formData: FormData) {
         return { error: error.message };
     }
 
+    // Check for admin role to redirect appropriately
+    // We need to fetch the role for the *just logged in* user.
+    // Since we are on the server, getAdminRole() will fetch the user from the current session context.
+    // However, we just signed in, so we might need to rely on the session being set.
+    // updateSession middleware should handle the token refresh, but let's see.
+
+    // Dynamic import to avoid circular dependency if any (though unlikely here)
+    const { getAdminRole } = await import("@/lib/admin/auth");
+    const role = await getAdminRole();
+
     revalidatePath("/", "layout");
+
+    if (role && ["super_admin", "admin", "operations", "content_manager", "support_agent"].includes(role)) {
+        redirect("/admin");
+    }
+
     redirect("/");
 }
 

@@ -1,4 +1,4 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { getCountry, getLocale } from '@/lib/i18n'
 
@@ -18,9 +18,24 @@ export async function middleware(request: NextRequest) {
         sessionResponse.cookies.set("locale", locale)
     }
 
-    // Apply headers for downstream components to access
-    sessionResponse.headers.set("x-country", country)
-    sessionResponse.headers.set("x-locale", locale)
+    // 3. Handle Admin Session (Custom JWT)
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+        // Allow the login and signup pages
+        if (request.nextUrl.pathname === '/admin/login' || request.nextUrl.pathname === '/admin/signup') {
+            return sessionResponse;
+        }
+
+        const adminSession = request.cookies.get("admin_session")?.value;
+        if (!adminSession) {
+            const loginUrl = new URL("/admin/login", request.url);
+            return NextResponse.redirect(loginUrl);
+        }
+
+        // We could verify the JWT here too for extra security in middleware,
+        // but 'requireAdmin' in each page will do it anyway.
+        // For strict protection, let's keep it simple: existence of cookie is enough for middleware,
+        // actual validity/role is checked in RSC via requireAdmin.
+    }
 
     return sessionResponse
 }
