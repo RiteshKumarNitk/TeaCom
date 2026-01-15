@@ -39,7 +39,7 @@ export function EditProductForm({ product, priceINR, priceSAR }: EditProductForm
     };
 
     const removeVariant = (index: number) => {
-        setVariants(variants.filter((_, i) => i !== index));
+        setVariants(variants.filter((_: any, i: number) => i !== index));
     };
 
     return (
