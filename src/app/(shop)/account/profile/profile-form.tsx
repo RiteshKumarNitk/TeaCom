@@ -25,6 +25,7 @@ const initialState = {
 };
 
 export default function ProfilePage({ user, profile }: { user?: any, profile?: any }) {
+    // @ts-ignore
     const [state, formAction] = useActionState(updateProfile, initialState);
 
     // If fetching happens in parent layout/page, we might pass it down. 

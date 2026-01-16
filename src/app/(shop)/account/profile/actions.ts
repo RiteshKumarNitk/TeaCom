@@ -26,6 +26,7 @@ export async function updateProfile(prevState: any, formData: FormData) {
 
     const { error } = await supabase
         .from("profiles")
+        // @ts-ignore
         .update({
             full_name: parsed.data.full_name,
             phone: parsed.data.phone

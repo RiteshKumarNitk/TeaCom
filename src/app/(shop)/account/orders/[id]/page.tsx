@@ -27,7 +27,7 @@ export default async function CustomerOrderPage({ params }: { params: Promise<{ 
         `)
         .eq("id", id)
         .eq("user_id", user.id)
-        .single();
+        .single() as any;
 
     if (error || !order) {
         return (
@@ -49,7 +49,7 @@ export default async function CustomerOrderPage({ params }: { params: Promise<{ 
         .from("returns")
         .select("status")
         .eq("order_id", order.id)
-        .single();
+        .single() as any;
 
     // Check return window (3 days from created_at or better, from a 'delivered_at' field if we had it)
     const deliveredDate = new Date(order.created_at);

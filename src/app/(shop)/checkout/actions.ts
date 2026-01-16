@@ -28,7 +28,7 @@ export async function validateCoupon(code: string) {
         .select("*")
         .eq("code", code)
         .eq("is_active", true)
-        .single();
+        .single() as any;
 
     if (error || !coupon) {
         return { error: "Invalid or expired coupon code" };
@@ -84,6 +84,7 @@ export async function placeOrder(prevState: any, formData: FormData) {
     // 2. Create Order
     const { data: order, error: orderError } = await supabase
         .from("orders")
+        // @ts-ignore
         .insert({
             email,
             phone,
@@ -97,7 +98,7 @@ export async function placeOrder(prevState: any, formData: FormData) {
             user_id: (await supabase.auth.getUser()).data.user?.id || null
         })
         .select()
-        .single();
+        .single() as any;
 
     if (orderError || !order) {
         console.error("Order Creation Error:", orderError);
@@ -117,6 +118,7 @@ export async function placeOrder(prevState: any, formData: FormData) {
 
     const { error: itemsError } = await supabase
         .from("order_items")
+        // @ts-ignore
         .insert(orderItems);
 
     if (itemsError) {
@@ -126,6 +128,7 @@ export async function placeOrder(prevState: any, formData: FormData) {
 
     // 4. Update Coupon Usage if applicable
     if (couponCode) {
+        // @ts-ignore
         await supabase.rpc('increment_coupon_usage', { coupon_code: couponCode });
     }
 

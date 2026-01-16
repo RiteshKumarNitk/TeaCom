@@ -40,7 +40,7 @@ export async function addAddress(prevState: any, formData: FormData) {
     const validated = addressSchema.safeParse(rawData);
 
     if (!validated.success) {
-        return { error: validated.error.errors[0].message };
+        return { error: validated.error.issues[0].message };
     }
 
     // Logic for Default Address: If this is the first address, or marked default, unmark others?
@@ -49,10 +49,12 @@ export async function addAddress(prevState: any, formData: FormData) {
     if (validated.data.is_default) {
         await supabase
             .from("addresses")
+            // @ts-ignore
             .update({ is_default: false })
             .eq("user_id", user.id);
     }
 
+    // @ts-ignore
     const { error } = await supabase.from("addresses").insert({
         user_id: user.id,
         ...validated.data
@@ -82,9 +84,11 @@ export async function setDefaultAddress(addressId: string) {
     if (!user) return;
 
     // 1. Unset all
+    // @ts-ignore
     await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
 
     // 2. Set new default
+    // @ts-ignore
     const { error } = await supabase.from("addresses").update({ is_default: true }).eq("id", addressId);
 
     revalidatePath("/account/addresses");

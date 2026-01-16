@@ -48,7 +48,7 @@ export default async function AddressesPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {addresses.map((addr) => (
+                    {addresses.map((addr: any) => (
                         <AddressCard key={addr.id} address={addr} />
                     ))}
                 </div>

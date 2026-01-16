@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { updateStaffRole, deleteStaff } from "./actions";
-import { AdminRole } from "@/lib/admin/auth";
+import { AdminRole } from "@/types/admin";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Trash2, Loader2 } from "lucide-react";

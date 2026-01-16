@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { AdminRole, requireAdmin } from "@/lib/admin/auth";
+import { requireAdmin } from "@/lib/admin/auth";
+import { AdminRole } from "@/types/admin";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 

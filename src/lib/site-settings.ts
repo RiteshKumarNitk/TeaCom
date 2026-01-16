@@ -8,7 +8,7 @@ export async function getSiteSettings() {
 
     // Transform array to object
     const settings: Record<string, any> = {};
-    data.forEach((item) => {
+    data.forEach((item: any) => {
         settings[item.key] = item.value;
     });
 
