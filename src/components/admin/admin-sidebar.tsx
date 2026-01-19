@@ -28,6 +28,7 @@ export function AdminSidebar({
         { href: "/admin/coupons", label: "Coupons", icon: Ticket },
         { href: "/admin/customers", label: "Customers", icon: Users },
         { href: "/admin/staff", label: "Staff", icon: Shield },
+        { href: "/admin/content", label: "Content", icon: BookOpen },
         { href: "/admin/marketing", label: "Marketing", icon: Megaphone },
         { href: "/admin/settings", label: "Settings", icon: Settings },
         { href: "/admin/logs", label: "Audit Logs", icon: ClipboardList },

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ShoppingBag, Menu, Search, User, Heart } from "lucide-react";
 import { CountrySwitcher } from "@/components/common/country-switcher";
+import { SearchBar } from "@/components/search/search-bar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/context/cart-context";
@@ -102,13 +103,8 @@ export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
                     </div>
 
                     {/* Desktop Search (Left) */}
-                    <div className="hidden lg:flex flex-1 max-w-xs relative bg-muted/50 rounded-full border border-transparent focus-within:border-primary/20 transition-all">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Search tea..."
-                            className="bg-transparent border-none text-sm w-full pl-9 pr-4 py-2 focus:ring-0 placeholder:text-muted-foreground/50 outline-none"
-                        />
+                    <div className="hidden lg:block flex-1 max-w-xs">
+                        <SearchBar />
                     </div>
 
                     {/* Logo (Center) */}
@@ -161,7 +157,7 @@ export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
                     </nav>
                 </div>
             </div>
-        </header>
+        </header >
     );
 }
 

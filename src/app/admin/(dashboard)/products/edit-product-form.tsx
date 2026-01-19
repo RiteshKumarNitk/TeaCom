@@ -35,7 +35,7 @@ export function EditProductForm({ product, priceINR, priceSAR }: EditProductForm
 
     const addVariant = () => {
         // Use negative ID for new items to distinguish
-        setVariants([...variants, { id: `new-${Date.now()}`, name: "", stock: 0 }]);
+        setVariants([...variants, { id: `new-${Date.now()}`, name: "", stock: 0, weight_value: 0, weight_unit: 'g' }]);
     };
 
     const removeVariant = (index: number) => {
@@ -59,7 +59,20 @@ export function EditProductForm({ product, priceINR, priceSAR }: EditProductForm
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="category">Category</Label>
-                        <Input id="category" name="category" defaultValue={product.category} required />
+                        <select
+                            id="category"
+                            name="category"
+                            defaultValue={product.category}
+                            required
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="" disabled>Select a category</option>
+                            <option value="Bestseller">Bestseller</option>
+                            <option value="Sampler Pack">Sampler Pack</option>
+                            <option value="Wellness">Wellness</option>
+                            <option value="New Arrivals">New Arrivals</option>
+                            <option value="Combo">Combo</option>
+                        </select>
                     </div>
                 </div>
 
@@ -142,15 +155,37 @@ export function EditProductForm({ product, priceINR, priceSAR }: EditProductForm
 
                 <div className="space-y-3">
                     {variants.map((variant: any, index: number) => (
-                        <div key={variant.id} className="flex items-end gap-4 p-4 bg-muted/20 rounded-lg border">
+                        <div key={variant.id} className="flex items-end gap-4 p-4 bg-muted/20 rounded-lg border flex-wrap md:flex-nowrap">
                             <input type="hidden" name={`variant_id_${index}`} value={variant.id} />
-                            <div className="flex-1 space-y-2">
+                            <div className="flex-1 min-w-[200px] space-y-2">
                                 <Label className="text-xs">Variant Name</Label>
                                 <Input
                                     name={`variant_name_${index}`}
                                     placeholder="e.g. 50g Box"
                                     defaultValue={variant.name}
                                 />
+                            </div>
+                            <div className="w-24 space-y-2">
+                                <Label className="text-xs">Weight</Label>
+                                <Input
+                                    name={`variant_weight_value_${index}`}
+                                    type="number"
+                                    placeholder="50"
+                                    defaultValue={variant.weight_value || 0}
+                                />
+                            </div>
+                            <div className="w-24 space-y-2">
+                                <Label className="text-xs">Unit</Label>
+                                <select
+                                    name={`variant_weight_unit_${index}`}
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    defaultValue={variant.weight_unit || 'g'}
+                                >
+                                    <option value="g">g</option>
+                                    <option value="kg">kg</option>
+                                    <option value="oz">oz</option>
+                                    <option value="lb">lb</option>
+                                </select>
                             </div>
                             <div className="w-32 space-y-2">
                                 <Label className="text-xs">Stock</Label>
@@ -161,7 +196,7 @@ export function EditProductForm({ product, priceINR, priceSAR }: EditProductForm
                                     defaultValue={variant.stock}
                                 />
                             </div>
-                            <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeVariant(index)}>
+                            <Button type="button" variant="ghost" size="icon" className="text-destructive mb-0.5" onClick={() => removeVariant(index)}>
                                 <Trash2 className="w-4 h-4" />
                             </Button>
                         </div>

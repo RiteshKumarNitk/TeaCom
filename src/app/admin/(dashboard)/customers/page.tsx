@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Mail, Phone, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default async function CustomersPage() {
     // Restricted to Super Admin, Admin, and Support
@@ -36,11 +38,12 @@ export default async function CustomersPage() {
                                     <th className="py-4 px-4">Email</th>
                                     <th className="py-4 px-4">Phone</th>
                                     <th className="py-4 px-4">Joined</th>
+                                    <th className="py-4 px-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y text-gray-700">
                                 {customers?.map((customer: any) => (
-                                    <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={customer.id} className="hover:bg-gray-50 transition-colors group">
                                         <td className="py-4 px-4 font-medium">{customer.full_name || "N/A"}</td>
                                         <td className="py-4 px-4">
                                             <div className="flex items-center gap-2">
@@ -61,6 +64,13 @@ export default async function CustomersPage() {
                                                 <Calendar className="w-3 h-3 text-gray-400" />
                                                 {customer.created_at ? format(new Date(customer.created_at), "MMM d, yyyy") : "N/A"}
                                             </div>
+                                        </td>
+                                        <td className="py-4 px-4 text-right">
+                                            <Link href={`/admin/customers/${encodeURIComponent(customer.email)}`}>
+                                                <Button size="sm" variant="outline" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    View Details
+                                                </Button>
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))}

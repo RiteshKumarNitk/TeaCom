@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/admin/audit";
 
 const postSchema = z.object({
     title: z.string().min(3, "Title is required"),
@@ -15,6 +17,8 @@ const postSchema = z.object({
 });
 
 export async function createPost(prevState: any, formData: FormData) {
+    await requireAdmin("manage_marketing");
+
     const supabase = await createClient();
 
     const rawData = {
@@ -32,20 +36,32 @@ export async function createPost(prevState: any, formData: FormData) {
         return { error: parsed.error.issues[0].message };
     }
 
-    const { error } = await (supabase as any).from("posts").insert(parsed.data as any);
+    const { data, error } = await (supabase as any).from("posts").insert(parsed.data as any).select().single();
 
     if (error) {
         if (error.code === "23505") return { error: "Slug already exists" };
         return { error: error.message };
     }
 
+    await logAdminAction({
+        action: "blog.create",
+        entityType: "post",
+        entityId: data.id,
+        newValue: parsed.data
+    });
+
     revalidatePath("/admin/blog");
     redirect("/admin/blog");
 }
 
 export async function updatePost(prevState: any, formData: FormData) {
+    await requireAdmin("manage_marketing");
+
     const supabase = await createClient();
     const id = formData.get("id") as string;
+
+    // Fetch old data for logging
+    const { data: oldPost } = await (supabase as any).from("posts").select("*").eq("id", id).single();
 
     const rawData = {
         title: formData.get("title"),
@@ -66,7 +82,7 @@ export async function updatePost(prevState: any, formData: FormData) {
         .from("posts")
         .update({
             ...parsed.data,
-            published_at: parsed.data.is_published ? new Date().toISOString() : null, // Simple logic: update published_at on publish
+            published_at: parsed.data.is_published && !oldPost.is_published ? new Date().toISOString() : oldPost.published_at,
             updated_at: new Date().toISOString()
         } as any)
         .eq("id", id);
@@ -76,15 +92,39 @@ export async function updatePost(prevState: any, formData: FormData) {
         return { error: error.message };
     }
 
+    await logAdminAction({
+        action: "blog.update",
+        entityType: "post",
+        entityId: id,
+        oldValue: oldPost,
+        newValue: parsed.data
+    });
+
     revalidatePath("/admin/blog");
     revalidatePath(`/blog/${parsed.data.slug}`);
     redirect("/admin/blog");
 }
 
-export async function deletePost(formData: FormData) {
-    const supabase = await createClient();
-    const id = formData.get("id") as string;
+export async function deletePost(id: string) {
+    await requireAdmin("manage_marketing");
 
-    await (supabase as any).from("posts").delete().eq("id", id);
+    const supabase = await createClient();
+
+    // Fetch old data for logging
+    const { data: oldPost } = await (supabase as any).from("posts").select("*").eq("id", id).single();
+
+    const { error } = await (supabase as any).from("posts").delete().eq("id", id);
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    await logAdminAction({
+        action: "blog.delete",
+        entityType: "post",
+        entityId: id,
+        oldValue: oldPost
+    });
+
     revalidatePath("/admin/blog");
 }

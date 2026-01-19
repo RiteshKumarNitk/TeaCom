@@ -25,7 +25,7 @@ export function ReturnActions({ id, currentStatus }: ReturnActionsProps) {
 
     return (
         <div className="flex gap-2 justify-end">
-            {currentStatus === "requested" && (
+            {currentStatus === "pending" && (
                 <>
                     <Button
                         size="sm"

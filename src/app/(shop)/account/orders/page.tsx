@@ -78,9 +78,13 @@ export default async function OrdersPage() {
                             <div className="p-4 space-y-4">
                                 {order.order_items.map((item: any) => (
                                     <div key={item.id} className="flex gap-4 items-center">
-                                        <div className="w-16 h-16 bg-gray-100 rounded-md border border-gray-200 overflow-hidden flex-shrink-0">
-                                            {item.product?.images?.[0] && (
+                                        <div className="w-16 h-16 bg-gray-100 rounded-md border border-gray-200 overflow-hidden flex-shrink-0 relative">
+                                            {item.product?.images?.[0] ? (
                                                 <img src={item.product.images[0]} alt={item.product_name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="flex items-center justify-center w-full h-full text-xs text-muted-foreground bg-gray-50">
+                                                    No Img
+                                                </div>
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">

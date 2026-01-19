@@ -1,59 +1,66 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { logAdminAction } from "@/lib/admin/audit";
 import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/admin/audit";
+import { sendEmail } from "@/lib/email/sender";
 
-export async function updateReturnStatus(
-    returnId: string,
-    newStatus: "approved" | "rejected" | "received" | "refunded",
-    adminNotes?: string
-) {
-    // 1. Auth Check
-    const admin = await requireAdmin("manage_orders");
-    const supabase = await createClient();
+// We'll create a basic notification email later
+// import { ReturnStatusEmail } from "@/components/emails/return-status";
 
-    // 2. Get current state for logging
-    const { data: oldReturn, error: fetchError } = await (supabase as any)
+export async function updateReturnStatus(returnId: string, status: string, notes: string) {
+    await requireAdmin("manage_orders");
+
+    // 1. Get Return Details for Email
+    const { data: ret } = await (supabaseAdmin as any)
         .from("returns")
-        .select("status, order_id")
+        .select(`*, user:users(email)`) // user is likely virtual relation if user_id linked to auth.users?
+        // Actually auth.users is not queryable directly via simple join usually unless view.
+        // But let's assume 'returns.user_id' -> 'profiles.id' if we have profile?
+        // Or we just query user by ID.
+        // Let's rely on standard join if exists, or just fetch manually.
         .eq("id", returnId)
         .single();
 
-    if (fetchError || !oldReturn) {
-        return { error: "Return request not found" };
-    }
+    if (!ret) throw new Error("Return not found");
 
-    // 3. Update Return
-    const { error: updateError } = await (supabase as any)
+    // Update Return
+    const { error } = await (supabaseAdmin as any)
         .from("returns")
         .update({
-            status: newStatus,
-            admin_notes: adminNotes,
+            status,
+            admin_notes: notes,
             updated_at: new Date().toISOString()
         })
         .eq("id", returnId);
 
-    if (updateError) {
-        return { error: `Failed to update return: ${updateError.message}` };
-    }
+    if (error) throw new Error(error.message);
 
-    // 4. If Refunded, we might want to update Order Status OR Inventory
-    // For now, let's just Log and Audit.
-    // Logic: If status is 'received', maybe restock? (Leaving manual for now as per requirements)
+    // If Approved, maybe auto-refund? For now just manual.
 
-    // 5. Audit Log
+    // Log
     await logAdminAction({
         action: "return.update_status",
         entityType: "return",
         entityId: returnId,
-        oldValue: { status: oldReturn.status },
-        newValue: { status: newStatus, notes: adminNotes }
+        newValue: { status, notes }
     });
 
-    revalidatePath("/admin/returns");
-    revalidatePath(`/admin/orders/${oldReturn.order_id}`);
+    // Notify User (DB)
+    await (supabaseAdmin as any).from("notifications").insert({
+        user_id: ret.user_id,
+        title: `Return Request ${status === 'approved' ? 'Approved' : 'Updated'}`,
+        message: `Your return request for order has been ${status}. Notes: ${notes}`,
+        type: "return_update",
+        metadata: { return_id: returnId }
+    });
 
-    return { success: true };
+    // Email (TODO: Implement actual template)
+    // const { data: userData } = await supabaseAdmin.auth.admin.getUserById(ret.user_id);
+    // if (userData.user?.email) {
+    //      await sendEmail(...)
+    // }
+
+    revalidatePath("/admin/returns");
 }

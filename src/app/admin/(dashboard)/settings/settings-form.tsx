@@ -56,6 +56,20 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                         />
                     </div>
 
+
+                    <div className="space-y-2">
+                        <Label htmlFor="freeShippingThreshold">Free Shipping Threshold</Label>
+                        <Input
+                            id="freeShippingThreshold"
+                            name="freeShippingThreshold"
+                            type="number"
+                            min="0"
+                            defaultValue={initialData?.free_shipping_threshold || "999"}
+                            placeholder="999"
+                        />
+                        <p className="text-xs text-muted-foreground">Order value above which shipping is free.</p>
+                    </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="currency">Default Currency</Label>
                         <Select name="currency" defaultValue={initialData?.currency || "INR"}>

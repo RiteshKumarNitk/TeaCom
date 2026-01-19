@@ -23,7 +23,10 @@ export default async function CustomerOrderPage({ params }: { params: Promise<{ 
         .from("orders")
         .select(`
             *,
-            order_items (*)
+            order_items (
+                *,
+                product:products(images)
+            )
         `)
         .eq("id", id)
         .eq("user_id", user.id)
@@ -108,10 +111,21 @@ export default async function CustomerOrderPage({ params }: { params: Promise<{ 
                                 {order.order_items.map((item: any) => (
                                     <TableRow key={item.id}>
                                         <TableCell>
-                                            <div className="font-medium text-gray-900">{item.product_name}</div>
-                                            {item.variant_id && (
-                                                <div className="text-xs text-muted-foreground font-mono">Variant: {item.variant_id.split('-')[0]}...</div>
-                                            )}
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-gray-100 rounded-md border border-gray-200 overflow-hidden flex-shrink-0">
+                                                    {item.product?.images?.[0] ? (
+                                                        <img src={item.product.images[0]} alt={item.product_name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="flex items-center justify-center h-full text-xs text-muted-foreground">No Img</div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-gray-900">{item.product_name}</div>
+                                                    {item.variant_id && (
+                                                        <div className="text-xs text-muted-foreground font-mono">Variant: {item.variant_id.split('-')[0]}...</div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-right">
                                             {item.currency} {item.price_amount}
@@ -142,16 +156,21 @@ export default async function CustomerOrderPage({ params }: { params: Promise<{ 
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-gray-50 rounded-lg border">
-                                        <div className="text-xs text-uppercase text-gray-500 font-semibold mb-1">Courier</div>
-                                        <div className="font-medium">{order.courier_name || "Standard Shipping"}</div>
+                                        <div className="text-xs text-uppercase text-gray-500 font-semibold mb-1">Carrier</div>
+                                        <div className="font-medium">{order.carrier || "Standard Shipping"}</div>
                                     </div>
                                     <div className="p-4 bg-gray-50 rounded-lg border">
                                         <div className="text-xs text-uppercase text-gray-500 font-semibold mb-1">Tracking Number</div>
                                         <div className="font-mono font-medium">{order.tracking_number}</div>
                                     </div>
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                    <p>Track your package on the {order.courier_name} website using the tracking number above.</p>
+                                <div className="text-sm text-gray-500 flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-dashed">
+                                    <span>Track your package via {order.carrier || "carrier"}.</span>
+                                    <Button size="sm" variant="secondary" className="gap-2" asChild>
+                                        <a href={`https://www.google.com/search?q=${order.carrier || "shipping"}+tracking+${order.tracking_number}`} target="_blank" rel="noopener noreferrer">
+                                            Track Shipment ↗
+                                        </a>
+                                    </Button>
                                 </div>
                             </div>
                         ) : (

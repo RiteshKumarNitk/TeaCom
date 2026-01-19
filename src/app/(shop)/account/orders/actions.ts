@@ -32,7 +32,7 @@ export async function requestReturn({ orderId, reason }: { orderId: string, reas
             order_id: orderId,
             user_id: user.id,
             reason: reason,
-            status: "pending",
+            status: "requested",
             refund_amount: order.total_amount
         });
 

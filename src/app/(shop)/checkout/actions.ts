@@ -1,7 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { sendEmail } from "@/lib/email/sender";
+import { OrderConfirmationEmail } from "@/components/emails/order-confirmation";
 
 export async function getUserAddresses() {
     const supabase = await createClient();
@@ -130,6 +133,58 @@ export async function placeOrder(prevState: any, formData: FormData) {
     if (couponCode) {
         // @ts-ignore
         await supabase.rpc('increment_coupon_usage', { coupon_code: couponCode });
+    }
+
+    // 5. Update Inventory
+    try {
+        for (const item of items) {
+            const variantId = item.variant?.id;
+            if (variantId) {
+                const { data: invItem } = await (supabaseAdmin as any)
+                    .from('inventory')
+                    .select('stock')
+                    .eq('product_variant_id', variantId)
+                    .single();
+
+                if (invItem) {
+                    const newStock = Math.max(0, invItem.stock - item.quantity);
+                    await (supabaseAdmin as any)
+                        .from('inventory')
+                        .update({ stock: newStock })
+                        .eq('product_variant_id', variantId);
+
+                    // Log the change
+                    await (supabaseAdmin as any)
+                        .from('inventory_logs')
+                        .insert({
+                            product_variant_id: variantId,
+                            change_amount: -item.quantity,
+                            previous_stock: invItem.stock,
+                            new_stock: newStock,
+                            reason: `Order #${order.id}`,
+                        });
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Failed to update inventory:", err);
+    }
+
+    // 6. Send Confirmation Email
+    try {
+        await sendEmail({
+            to: email,
+            subject: `Order Confirmation #${order.id.slice(0, 8)}`,
+            // @ts-ignore
+            react: OrderConfirmationEmail({
+                customerName: fullName,
+                orderId: order.id,
+                totalAmount: total.toFixed(2),
+                currency: currency
+            })
+        });
+    } catch (e) {
+        console.error("Failed to send email", e);
     }
 
     // 5. Success

@@ -127,34 +127,44 @@ export default async function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-bold font-serif mb-12 text-center text-primary">Explore by Category</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Sampler Pack */}
+              <Link href="/shop?category=Sampler Pack" className="group relative h-64 rounded-2xl overflow-hidden shadow-lg cursor-pointer">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
+                <img src="https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?auto=format&fit=crop&q=80" alt="Sampler Pack" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <div className="absolute bottom-6 left-6 z-20 text-white">
+                  <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">Sampler Packs</h3>
+                  <p className="text-xs text-gray-300">Try our finest selection</p>
+                </div>
+              </Link>
+
               {/* Wellness */}
-              <Link href="/shop?category=Wellness" className="group relative h-80 rounded-2xl overflow-hidden shadow-lg cursor-pointer">
+              <Link href="/shop?category=Wellness" className="group relative h-64 rounded-2xl overflow-hidden shadow-lg cursor-pointer">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
-                <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80" alt="Wellness Tea" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&q=80" alt="Wellness" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute bottom-6 left-6 z-20 text-white">
-                  <h3 className="text-2xl font-bold mb-1 group-hover:text-primary transition-colors">Wellness</h3>
-                  <p className="text-sm text-gray-300">Detox & Immunity</p>
+                  <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">Wellness</h3>
+                  <p className="text-xs text-gray-300">Detox & Immunity</p>
                 </div>
               </Link>
 
-              {/* Black Tea */}
-              <Link href="/shop?category=Black" className="group relative h-80 rounded-2xl overflow-hidden shadow-lg cursor-pointer">
+              {/* New Arrivals */}
+              <Link href="/shop?category=New Arrivals" className="group relative h-64 rounded-2xl overflow-hidden shadow-lg cursor-pointer">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
-                <img src="https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&q=80" alt="Black Tea" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img src="https://images.unsplash.com/photo-1563911302283-d2bc129e7c1f?auto=format&fit=crop&q=80" alt="New Arrivals" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute bottom-6 left-6 z-20 text-white">
-                  <h3 className="text-2xl font-bold mb-1 group-hover:text-primary transition-colors">Black Tea</h3>
-                  <p className="text-sm text-gray-300">Robust & Classic</p>
+                  <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">New Arrivals</h3>
+                  <p className="text-xs text-gray-300">Fresh from the estates</p>
                 </div>
               </Link>
 
-              {/* Green Tea */}
-              <Link href="/shop?category=Green" className="group relative h-80 rounded-2xl overflow-hidden shadow-lg cursor-pointer">
+              {/* Combo */}
+              <Link href="/shop?category=Combo" className="group relative h-64 rounded-2xl overflow-hidden shadow-lg cursor-pointer">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
-                <img src="https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?auto=format&fit=crop&q=80" alt="Green Tea" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                <img src="https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?auto=format&fit=crop&q=80" alt="Combo" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute bottom-6 left-6 z-20 text-white">
-                  <h3 className="text-2xl font-bold mb-1 group-hover:text-primary transition-colors">Green Tea</h3>
-                  <p className="text-sm text-gray-300">Fresh & Light</p>
+                  <h3 className="text-xl font-bold mb-1 group-hover:text-primary transition-colors">Combos</h3>
+                  <p className="text-xs text-gray-300">Perfect Value Services</p>
                 </div>
               </Link>
             </div>

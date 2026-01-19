@@ -1,9 +1,11 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/admin/audit";
 
 const collectionSchema = z.object({
     name: z.string().min(2),
@@ -16,7 +18,7 @@ const collectionSchema = z.object({
 });
 
 export async function createCollection(prevState: any, formData: FormData) {
-    const supabase = await createClient();
+    await requireAdmin("manage_marketing");
 
     const data = Object.fromEntries(formData);
     const parsed = collectionSchema.safeParse(data);
@@ -25,7 +27,7 @@ export async function createCollection(prevState: any, formData: FormData) {
         return { error: parsed.error.issues[0].message };
     }
 
-    const { error } = await (supabase as any).from("collections").insert({
+    const { data: newCollection, error } = await (supabaseAdmin as any).from("collections").insert({
         name: parsed.data.name,
         slug: parsed.data.slug,
         type: parsed.data.type,
@@ -33,7 +35,16 @@ export async function createCollection(prevState: any, formData: FormData) {
         starts_at: parsed.data.starts_at || null,
         ends_at: parsed.data.ends_at || null,
         is_active: parsed.data.is_active || false,
-    });
+    }).select().single();
+
+    if (!error && newCollection) {
+        await logAdminAction({
+            action: "collection.create",
+            entityType: "collection",
+            entityId: newCollection.id,
+            newValue: parsed.data
+        });
+    }
 
     if (error) {
         if (error.code === '23505') {

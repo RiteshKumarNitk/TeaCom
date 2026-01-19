@@ -2,95 +2,78 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
-const addressSchema = z.object({
-    full_name: z.string().min(2, "Name is required"),
-    phone: z.string().min(10, "Valid phone is required"),
-    address_line1: z.string().min(5, "Address is required"),
-    address_line2: z.string().optional(),
-    city: z.string().min(2, "City is required"),
-    state: z.string().min(2, "State is required"),
-    postal_code: z.string().min(4, "Postal Code is required"),
-    country: z.string().default("India"),
-    is_default: z.boolean().default(false),
-});
+export async function getAddresses() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("is_default", { ascending: false })
+        .order("created_at", { ascending: false });
+
+    return data || [];
+}
 
 export async function addAddress(prevState: any, formData: FormData) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Login required" };
 
-    if (!user) {
-        return { error: "You must be logged in to add an address." };
-    }
-
-    // Parse Data
-    const rawData = {
+    const address = {
+        user_id: user.id,
         full_name: formData.get("fullName"),
         phone: formData.get("phone"),
         address_line1: formData.get("addressLine1"),
-        address_line2: formData.get("addressLine2"),
         city: formData.get("city"),
         state: formData.get("state"),
         postal_code: formData.get("postalCode"),
-        country: formData.get("country") || "India",
+        country: "India", // Defaulting for now as per other forms, or could capture
         is_default: formData.get("isDefault") === "on",
     };
 
-    const validated = addressSchema.safeParse(rawData);
-
-    if (!validated.success) {
-        return { error: validated.error.issues[0].message };
-    }
-
-    // Logic for Default Address: If this is the first address, or marked default, unmark others?
-    // Doing strict "If marked default, update others" within a transaction ideally, or sequential update.
-
-    if (validated.data.is_default) {
-        await supabase
+    if (address.is_default) {
+        // Unset other defaults
+        await (supabase as any)
             .from("addresses")
-            // @ts-ignore
             .update({ is_default: false })
             .eq("user_id", user.id);
     }
 
-    // @ts-ignore
-    const { error } = await supabase.from("addresses").insert({
-        user_id: user.id,
-        ...validated.data
-    });
+    const { error } = await (supabase as any).from("addresses").insert(address);
 
-    if (error) {
-        return { error: error.message };
-    }
+    if (error) return { error: error.message };
 
     revalidatePath("/account/addresses");
-    revalidatePath("/checkout");
+    revalidatePath("/checkout"); // Update checkout address list
     return { success: true };
 }
 
-
 export async function deleteAddress(addressId: string) {
     const supabase = await createClient();
-    const { error } = await supabase.from("addresses").delete().eq("id", addressId);
-    if (error) return { error: error.message };
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Login required" };
+
+    await (supabase as any)
+        .from("addresses")
+        .delete()
+        .eq("id", addressId)
+        .eq("user_id", user.id);
+
     revalidatePath("/account/addresses");
-    revalidatePath("/checkout");
 }
 
-export async function setDefaultAddress(addressId: string) {
+export async function makeDefault(addressId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return { error: "Login required" };
 
-    // 1. Unset all
-    // @ts-ignore
-    await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
-
-    // 2. Set new default
-    // @ts-ignore
-    const { error } = await supabase.from("addresses").update({ is_default: true }).eq("id", addressId);
+    // Batch updates: unset all, set one
+    await (supabase as any).from("addresses").update({ is_default: false }).eq("user_id", user.id);
+    await (supabase as any).from("addresses").update({ is_default: true }).eq("id", addressId).eq("user_id", user.id);
 
     revalidatePath("/account/addresses");
-    revalidatePath("/checkout");
 }

@@ -1,91 +1,96 @@
 import { createClient } from "@/lib/supabase/server";
 import { format } from "date-fns";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ReturnActions } from "./return-actions";
-import Link from "next/link";
-import { requireAdmin } from "@/lib/admin/auth";
-
-export const dynamic = "force-dynamic";
+import { Button } from "@/components/ui/button";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { updateReturnStatus } from "./actions"; // Need to create
+import { Check, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 export default async function ReturnsPage() {
-    await requireAdmin("manage_orders");
     const supabase = await createClient();
 
-    // Fetch returns with order details
-    // Note: Using 'any' cast because TS types for joined text tables (orders) might be tricky without full generation
     const { data: returns, error } = await (supabase as any)
         .from("returns")
         .select(`
             *,
-            orders (
-                id,
-                total_amount,
-                currency,
-                email
-            )
+            order:orders(id, total_amount, currency, email) 
         `)
         .order("created_at", { ascending: false });
 
     if (error) {
-        return <div className="text-red-500">Failed to load returns: {error.message}</div>;
+        return <div className="p-4 text-red-500">Error: {error.message}</div>;
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-serif font-bold text-gray-900">Returns Management</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Return Requests</h1>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="rounded-md border bg-white shadow-sm">
                 <Table>
                     <TableHeader>
-                        <TableRow className="bg-gray-50/50">
-                            <TableHead>Date</TableHead>
-                            <TableHead>Order</TableHead>
-                            <TableHead>Customer</TableHead>
+                        <TableRow>
+                            <TableHead>Requested On</TableHead>
+                            <TableHead>Order Info</TableHead>
                             <TableHead>Reason</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Refund Amount</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead>Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {!returns || returns.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                                <TableCell colSpan={5} className="h-24 text-center">
                                     No return requests found.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            returns.map((req: any) => (
-                                <TableRow key={req.id}>
-                                    <TableCell className="text-xs text-muted-foreground">
-                                        {format(new Date(req.created_at), "MMM d, yyyy")}
+                            returns.map((ret: any) => (
+                                <TableRow key={ret.id}>
+                                    <TableCell>
+                                        <div className="font-medium text-sm">
+                                            {format(new Date(ret.created_at), "MMM d, yyyy")}
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                            {format(new Date(ret.created_at), "HH:mm")}
+                                        </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Link href={`/admin/orders/${req.order_id}`} className="text-blue-600 hover:underline font-mono text-sm">
-                                            #{req.order_id.slice(0, 8)}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell className="text-sm">
-                                        {req.orders?.email || "Guest"}
-                                    </TableCell>
-                                    <TableCell className="max-w-[200px] truncate" title={req.reason}>
-                                        {req.reason}
+                                        <div className="font-mono text-sm">#{ret.order?.id?.slice(0, 8)}</div>
+                                        <div className="text-xs text-muted-foreground">{ret.order?.email}</div>
+                                        <div className="text-xs font-medium text-green-700">
+                                            Refund: {ret.order?.currency} {ret.refund_amount}
+                                        </div>
                                     </TableCell>
                                     <TableCell>
-                                        <ReturnStatusBadge status={req.status} />
+                                        <div className="text-sm font-medium line-clamp-1">{ret.reason.split(':')[0]}</div>
+                                        <div className="text-xs text-muted-foreground line-clamp-1">
+                                            {ret.reason.split(':')[1]?.trim() || ret.reason}
+                                        </div>
                                     </TableCell>
                                     <TableCell>
-                                        {req.refund_amount ? (
-                                            <span className="font-mono text-sm">
-                                                {req.orders?.currency} {req.refund_amount}
-                                            </span>
-                                        ) : "-"}
+                                        <ReturnStatusBadge status={ret.status} />
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <ReturnActions id={req.id} currentStatus={req.status} />
+                                    <TableCell>
+                                        {ret.status === "requested" && (
+                                            <div className="flex gap-2">
+                                                <ApproveDialog returnId={ret.id} refundAmount={ret.refund_amount} />
+                                                <RejectDialog returnId={ret.id} />
+                                            </div>
+                                        )}
+                                        {ret.status !== "requested" && (
+                                            <span className="text-xs text-muted-foreground">Processed</span>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -98,18 +103,14 @@ export default async function ReturnsPage() {
 }
 
 function ReturnStatusBadge({ status }: { status: string }) {
-    switch (status) {
-        case "requested":
-            return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Requested</Badge>;
-        case "approved":
-            return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Approved</Badge>;
-        case "rejected":
-            return <Badge variant="destructive">Rejected</Badge>;
-        case "received":
-            return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Received</Badge>;
-        case "refunded":
-            return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Refunded</Badge>;
-        default:
-            return <Badge variant="outline">{status}</Badge>;
-    }
+    const styles: Record<string, string> = {
+        requested: "bg-yellow-100 text-yellow-800",
+        approved: "bg-green-100 text-green-800",
+        rejected: "bg-red-100 text-red-800",
+        refunded: "bg-purple-100 text-purple-800",
+    };
+    return <Badge className={`${styles[status] || "bg-gray-100"} hover:bg-opacity-80`}>{status}</Badge>;
 }
+
+// Client Components for Actions
+import { ApproveDialog, RejectDialog } from "./dialogs";

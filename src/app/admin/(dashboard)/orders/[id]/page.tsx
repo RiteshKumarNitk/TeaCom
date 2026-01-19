@@ -258,11 +258,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                             <input type="hidden" name="orderId" value={order.id} />
 
                             <div className="space-y-2">
-                                <Label htmlFor="courierName">Courier Name</Label>
+                                <Label htmlFor="carrier">Carrier Name</Label>
                                 <Input
-                                    id="courierName"
-                                    name="courierName"
-                                    defaultValue={order.courier_name || ""}
+                                    id="carrier"
+                                    name="carrier"
+                                    defaultValue={order.carrier || ""}
                                     placeholder="e.g. FedEx, BlueDart"
                                 />
                             </div>

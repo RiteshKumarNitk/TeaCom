@@ -1,20 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import Link from "next/link";
-import { deleteProduct } from "./actions";
 import { requireAdmin } from "@/lib/admin/auth";
+import { DeleteProductButton } from "./product-actions";
 
 export default async function AdminProductsPage() {
     await requireAdmin("manage_products");
     const supabase = await createClient();
 
-    // Fetch products with their pricing
+    // Fetch products with their pricing and variants (joining inventory for accurate stock)
     const { data: products } = await supabase
         .from("products")
         .select(`
             *,
-            prices:product_prices(amount, currency)
+            prices:product_prices(amount, currency),
+            variants:product_variants(
+                name, 
+                weight_value, 
+                weight_unit, 
+                stock,
+                inventory(stock)
+            )
         `)
         .order("created_at", { ascending: false });
 
@@ -39,6 +46,7 @@ export default async function AdminProductsPage() {
                         <tr>
                             <th className="p-4 pl-6">Product Name</th>
                             <th className="p-4">Category</th>
+                            <th className="p-4">Variants</th>
                             <th className="p-4">Price (INR)</th>
                             <th className="p-4">Status</th>
                             <th className="p-4 text-right pr-6">Actions</th>
@@ -66,6 +74,29 @@ export default async function AdminProductsPage() {
                                         </div>
                                     </td>
                                     <td className="p-4 capitalize">{product.category || "-"}</td>
+                                    <td className="p-4 text-xs">
+                                        {product.variants?.length > 0 ? (
+                                            <div className="space-y-1">
+                                                {product.variants.map((v: any, idx: number) => {
+                                                    // Prefer inventory table stock, fallback to variant column
+                                                    const realStock = v.inventory?.stock ?? v.stock;
+                                                    return (
+                                                        <div key={idx} className="flex items-center gap-2 text-muted-foreground">
+                                                            <span className="font-medium text-foreground">{v.name}</span>
+                                                            <span>
+                                                                {v.weight_value > 0 ? `(${v.weight_value}${v.weight_unit || 'g'})` : ''}
+                                                            </span>
+                                                            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${realStock > 10 ? 'bg-green-100 text-green-700' : realStock > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
+                                                                {realStock} left
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <span className="text-muted-foreground italic">No variants</span>
+                                        )}
+                                    </td>
                                     <td className="p-4 font-mono">
                                         ₹{inrPrice || "N/A"}
                                     </td>
@@ -88,12 +119,7 @@ export default async function AdminProductsPage() {
                                                     <Pencil className="w-4 h-4 text-gray-500" />
                                                 </Link>
                                             </Button>
-                                            <form action={deleteProduct}>
-                                                <input type="hidden" name="id" value={product.id} />
-                                                <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </form>
+                                            <DeleteProductButton id={product.id} />
                                         </div>
                                     </td>
                                 </tr>

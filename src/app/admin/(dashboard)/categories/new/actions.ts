@@ -1,9 +1,11 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/admin/auth";
+import { logAdminAction } from "@/lib/admin/audit";
 
 const categorySchema = z.object({
     name: z.string().min(2),
@@ -14,7 +16,7 @@ const categorySchema = z.object({
 });
 
 export async function createCategory(prevState: any, formData: FormData) {
-    const supabase = await createClient();
+    await requireAdmin("manage_products"); // Categories fall under product management
 
     const data = Object.fromEntries(formData);
     const parsed = categorySchema.safeParse(data);
@@ -23,13 +25,22 @@ export async function createCategory(prevState: any, formData: FormData) {
         return { error: parsed.error.issues[0].message };
     }
 
-    const { error } = await (supabase as any).from("categories").insert({
+    const { data: newCategory, error } = await (supabaseAdmin as any).from("categories").insert({
         name: parsed.data.name,
         slug: parsed.data.slug,
         description: parsed.data.description,
         image_url: parsed.data.image_url || null,
         is_active: parsed.data.is_active || false,
-    });
+    }).select().single();
+
+    if (!error && newCategory) {
+        await logAdminAction({
+            action: "category.create",
+            entityType: "category",
+            entityId: newCategory.id,
+            newValue: parsed.data
+        });
+    }
 
     if (error) {
         if (error.code === '23505') {

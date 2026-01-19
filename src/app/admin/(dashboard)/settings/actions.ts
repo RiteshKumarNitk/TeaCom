@@ -17,6 +17,7 @@ export async function updateSettings(prevState: SettingsState, formData: FormDat
     const currency = formData.get("currency") as string;
     const maintenanceMode = formData.get("maintenanceMode") === "on";
     const contactEmail = formData.get("contactEmail") as string;
+    const freeShippingThreshold = Number(formData.get("freeShippingThreshold") || 999);
 
     if (!storeName || !contactEmail) {
         return { error: "Store Name and Contact Email are required." };
@@ -35,6 +36,7 @@ export async function updateSettings(prevState: SettingsState, formData: FormDat
                 currency,
                 maintenance_mode: maintenanceMode,
                 contact_email: contactEmail,
+                free_shipping_threshold: freeShippingThreshold,
                 updated_at: new Date().toISOString()
             })
             .eq("id", existing.id);
@@ -46,7 +48,8 @@ export async function updateSettings(prevState: SettingsState, formData: FormDat
                 store_name: storeName,
                 currency,
                 maintenance_mode: maintenanceMode,
-                contact_email: contactEmail
+                contact_email: contactEmail,
+                free_shipping_threshold: freeShippingThreshold
             });
         error = insertError;
     }

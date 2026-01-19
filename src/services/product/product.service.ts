@@ -33,13 +33,38 @@ function mapProduct(row: any): Product {
         isBestseller: row.is_bestseller,
         isNew: row.is_new,
         basePrice: basePrice as Record<"in" | "sa", Money>,
-        variants: [] // Variants logic to be added if needed, currently assuming base products
+        variants: (row.product_variants || []).map((v: any) => {
+            // Default to base price
+            const variantPricing: Record<string, Money> = { ...basePrice };
+
+            // Override with variant-specific prices if available
+            if (row.product_prices && Array.isArray(row.product_prices)) {
+                row.product_prices.forEach((p: any) => {
+                    if (p.variant_id === v.id) {
+                        if (p.currency === 'INR') {
+                            variantPricing.in = { amount: Number(p.amount), currency: "INR" };
+                        } else if (p.currency === 'SAR') {
+                            variantPricing.sa = { amount: Number(p.amount), currency: "SAR" };
+                        }
+                    }
+                });
+            }
+
+            return {
+                id: v.id,
+                name: v.name,
+                sku: v.sku,
+                // Handle joined inventory object or legacy column or default
+                stock: (v.inventory?.stock !== undefined) ? v.inventory.stock : (v.stock || 0),
+                pricing: variantPricing
+            };
+        })
     };
 }
 
 export interface ProductFilterOptions {
     category?: string;
-    sort?: "price_asc" | "price_desc" | "newest";
+    sort?: "price_asc" | "price_desc" | "newest" | "bestseller";
 }
 
 export class ProductService {
@@ -53,6 +78,14 @@ export class ProductService {
                 product_prices (
                     currency,
                     amount
+                ),
+                product_variants (
+                    id,
+                    name,
+                    sku,
+                    inventory (
+                        stock
+                    )
                 )
             `);
 
@@ -61,6 +94,11 @@ export class ProductService {
         }
 
         if (filters?.sort === 'newest') {
+            query = query.order('created_at', { ascending: false });
+        } else if (filters?.sort === 'bestseller') {
+            query = query.eq('is_bestseller', true);
+        } else {
+            // Default sort
             query = query.order('created_at', { ascending: false });
         }
         // Note: Sort by price is complex in Supabase because price is in a joined table or JSONB. 
@@ -93,6 +131,14 @@ export class ProductService {
                 product_prices (
                     currency,
                     amount
+                ),
+                product_variants (
+                    id,
+                    name,
+                    sku,
+                    inventory (
+                        stock
+                    )
                 )
             `)
             .eq('is_bestseller', true);
@@ -113,6 +159,14 @@ export class ProductService {
                 product_prices (
                     currency,
                     amount
+                ),
+                product_variants (
+                    id,
+                    name,
+                    sku,
+                    inventory (
+                        stock
+                    )
                 )
             `)
             .eq('slug', slug)
@@ -124,6 +178,32 @@ export class ProductService {
         }
 
         return mapProduct(data);
+    }
+    async searchProducts(query: string): Promise<Product[]> {
+        if (!query || query.length < 2) return [];
+
+        const { data, error } = await this.supabase
+            .from('products')
+            .select(`
+                *,
+                product_prices (
+                    currency,
+                    amount
+                ),
+                product_variants (
+                    id,
+                    name,
+                    sku,
+                    inventory (
+                        stock
+                    )
+                )
+            `)
+            .ilike('name', `%${query}%`)
+            .limit(5);
+
+        if (error || !data) return [];
+        return data.map(mapProduct);
     }
 }
 

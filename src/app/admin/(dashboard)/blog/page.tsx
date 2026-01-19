@@ -3,6 +3,7 @@ import { Database } from "@/types/database.types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus, Edit, Eye } from "lucide-react";
+import { BlogActions } from "./blog-actions";
 
 export default async function AdminBlogPage() {
     const supabase = await createClient();
@@ -63,17 +64,8 @@ export default async function AdminBlogPage() {
                                     <td className="px-6 py-4 text-muted-foreground">
                                         {post.published_at ? new Date(post.published_at).toLocaleDateString() : "-"}
                                     </td>
-                                    <td className="px-6 py-4 text-right space-x-2">
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link href={`/blog/${post.slug}`} target="_blank">
-                                                <Eye className="w-4 h-4 text-muted-foreground" />
-                                            </Link>
-                                        </Button>
-                                        <Button variant="ghost" size="sm" asChild>
-                                            <Link href={`/admin/blog/${post.id}`}>
-                                                <Edit className="w-4 h-4 text-primary" />
-                                            </Link>
-                                        </Button>
+                                    <td className="px-6 py-4 text-right">
+                                        <BlogActions id={post.id} slug={post.slug} />
                                     </td>
                                 </tr>
                             ))

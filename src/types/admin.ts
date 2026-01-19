@@ -26,6 +26,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
     "/admin/coupons": "manage_marketing",
     "/admin/customers": "manage_users",
     "/admin/staff": "manage_staff",
+    "/admin/content": "manage_marketing",
     "/admin/marketing": "manage_marketing",
     "/admin/settings": "manage_settings",
     "/admin/logs": "manage_staff",

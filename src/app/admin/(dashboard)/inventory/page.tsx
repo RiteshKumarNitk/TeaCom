@@ -2,6 +2,10 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InventoryAdjustDialog } from "./components/inventory-adjust-dialog";
+import { InventoryHistoryDialog } from "./components/inventory-history-dialog";
+import Link from "next/link";
+import { History } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +39,14 @@ export default async function InventoryPage() {
                     <h1 className="text-3xl font-serif font-bold text-gray-900">Inventory Management</h1>
                     <p className="text-muted-foreground">Manage stock levels for all products.</p>
                 </div>
-                <Button variant="outline">Refresh</Button>
+                <div className="flex gap-2">
+                    <Button variant="outline" asChild>
+                        <Link href="/admin/inventory/logs">
+                            <History className="w-4 h-4 mr-2" />
+                            View Logs
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -78,7 +89,19 @@ export default async function InventoryPage() {
                                             }
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button size="sm" variant="secondary" className="h-7">Adjust</Button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <InventoryAdjustDialog
+                                                    variantId={variant?.id}
+                                                    productName={product?.name || "Unknown Product"}
+                                                    variantName={variant?.name || "Default"}
+                                                    currentStock={item.stock}
+                                                />
+                                                <InventoryHistoryDialog
+                                                    variantId={variant?.id}
+                                                    productName={product?.name || "Unknown Product"}
+                                                    variantName={variant?.name || "Default"}
+                                                />
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 )

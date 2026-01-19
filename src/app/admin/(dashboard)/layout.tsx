@@ -26,9 +26,9 @@ export default async function AdminLayout({
         <div className="flex min-h-screen bg-gray-50">
             <AdminSidebar role={role} onSignOut={adminSignOut} />
 
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-screen">
                 <AdminHeader />
-                <main className="flex-1 overflow-auto p-6 md:p-8">
+                <main className="flex-1 p-6 md:p-8">
                     <div className="max-w-7xl mx-auto w-full">
                         {children}
                     </div>

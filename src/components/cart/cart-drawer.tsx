@@ -70,8 +70,17 @@ export function CartDrawer() {
                                 return (
                                     <div key={item.id} className="flex gap-4">
                                         <div className="h-20 w-20 bg-muted rounded-lg relative overflow-hidden flex-shrink-0 border border-border">
-                                            {/* Placeholder Image */}
-                                            <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200" />
+                                            {item.product.images && item.product.images.length > 0 ? (
+                                                <img
+                                                    src={item.product.images[0]}
+                                                    alt={item.product.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-xs text-muted-foreground">
+                                                    No Img
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex-1 flex flex-col justify-between">
                                             <div>
