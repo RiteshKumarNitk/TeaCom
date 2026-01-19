@@ -40,7 +40,7 @@ export async function createCoupon(prevState: any, formData: FormData) {
                 usage_limit: validated.usage_limit,
                 expires_at: validated.expires_at || null,
                 is_active: true
-            });
+            } as any);
 
         if (error) {
             return { error: `Failed to create coupon: ${error.message}` };
@@ -50,7 +50,7 @@ export async function createCoupon(prevState: any, formData: FormData) {
         redirect("/admin/coupons");
     } catch (e: any) {
         if (e instanceof z.ZodError) {
-            return { error: e.errors[0].message };
+            return { error: e.issues[0].message };
         }
         if (e.message === "NEXT_REDIRECT") throw e;
         return { error: e.message };

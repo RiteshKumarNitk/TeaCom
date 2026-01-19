@@ -1,0 +1,115 @@
+
+> teacom@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\RITESH\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\RITESH\Documents\github\TeaCom\package-lock.json
+
+▲ Next.js 16.1.1 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+✓ Compiled successfully in 31.0s
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 2150ms
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/42) ...
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'view_dashboard'
+  Generating static pages using 7 workers (10/42) 
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'manage_marketing'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'manage_users'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'manage_settings'
+  Generating static pages using 7 workers (20/42) 
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'manage_products'
+[AdminAuth] Verifying permission: 'view_dashboard'
+[AdminAuth] Verifying permission: 'manage_staff'
+  Generating static pages using 7 workers (31/42) 
+✓ Generating static pages using 7 workers (42/42) in 1591.0ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /about
+├ ƒ /account
+├ ƒ /account/addresses
+├ ƒ /account/orders
+├ ƒ /account/orders/[id]
+├ ƒ /account/profile
+├ ƒ /account/wishlist
+├ ƒ /admin
+├ ƒ /admin/analytics
+├ ƒ /admin/blog
+├ ƒ /admin/blog/[id]
+├ ƒ /admin/blog/new
+├ ƒ /admin/categories
+├ ƒ /admin/categories/new
+├ ƒ /admin/collections
+├ ƒ /admin/collections/new
+├ ƒ /admin/content
+├ ƒ /admin/coupons
+├ ƒ /admin/coupons/new
+├ ƒ /admin/customers
+├ ƒ /admin/customers/[email]
+├ ƒ /admin/inventory
+├ ƒ /admin/inventory/logs
+├ ƒ /admin/login
+├ ƒ /admin/logs
+├ ƒ /admin/marketing
+├ ƒ /admin/orders
+├ ƒ /admin/orders/[id]
+├ ƒ /admin/products
+├ ƒ /admin/products/[id]
+├ ƒ /admin/products/new
+├ ƒ /admin/returns
+├ ƒ /admin/settings
+├ ƒ /admin/signup
+├ ƒ /admin/staff
+├ ƒ /auth/callback
+├ ƒ /blog
+├ ƒ /blog/[slug]
+├ ƒ /checkout
+├ ƒ /checkout/success
+├ ƒ /collections
+├ ƒ /contact
+├ ƒ /debug-env
+├ ƒ /login
+├ ƒ /privacy
+├ ƒ /product/[slug]
+├ ƒ /recipes
+├ ƒ /refund
+├ ○ /robots.txt
+├ ƒ /shipping
+├ ƒ /shop
+├ ƒ /signup
+├ ƒ /signup/success
+├ ○ /sitemap.xml
+├ ƒ /terms
+├ ƒ /track
+└ ƒ /wishlist
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

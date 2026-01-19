@@ -42,7 +42,7 @@ export async function addReview(prevState: any, formData: FormData) {
         rating,
         title,
         content
-    });
+    } as any);
 
     if (error) {
         console.error("Review Error:", error);

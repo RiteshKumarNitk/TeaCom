@@ -9,7 +9,7 @@ import { sendEmail } from "@/lib/email/sender";
 // We'll create a basic notification email later
 // import { ReturnStatusEmail } from "@/components/emails/return-status";
 
-export async function updateReturnStatus(returnId: string, status: string, notes: string) {
+export async function updateReturnStatus(returnId: string, status: string, notes: string = "") {
     await requireAdmin("manage_orders");
 
     // 1. Get Return Details for Email

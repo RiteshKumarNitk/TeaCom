@@ -17,14 +17,14 @@ export async function toggleWishlist(productId: string) {
         .select("id")
         .eq("user_id", user.id)
         .eq("product_id", productId)
-        .single();
+        .maybeSingle();
 
     if (existing) {
         // Remove
         await supabase
             .from("wishlists")
             .delete()
-            .eq("id", existing.id);
+            .eq("id", (existing as any).id);
 
         revalidatePath("/account/wishlist");
         revalidatePath("/shop");
@@ -36,7 +36,7 @@ export async function toggleWishlist(productId: string) {
             .insert({
                 user_id: user.id,
                 product_id: productId
-            });
+            } as any);
 
         revalidatePath("/account/wishlist");
         revalidatePath("/shop");
