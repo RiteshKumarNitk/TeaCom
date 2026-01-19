@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ShoppingBag, Menu, Search, User, Heart } from "lucide-react";
-import { CountrySwitcher } from "@/components/common/country-switcher";
 import { SearchBar } from "@/components/search/search-bar";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -117,8 +116,6 @@ export function Header({ coupons = [] }: { coupons?: Coupon[] }) {
 
                     {/* Actions (Right) */}
                     <div className="flex flex-1 justify-end items-center gap-2 md:gap-4">
-                        <CountrySwitcher />
-
                         <Link href="/wishlist" className="p-2 hover:bg-muted rounded-full transition-colors hidden sm:flex text-foreground/70 hover:text-primary">
                             <Heart className="w-5 h-5" />
                         </Link>

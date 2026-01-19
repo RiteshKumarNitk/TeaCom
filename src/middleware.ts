@@ -4,7 +4,7 @@ import { getCountry, getLocale } from '@/lib/i18n'
 
 export async function middleware(request: NextRequest) {
     // 1. Handle Supabase Session
-    const sessionResponse = await updateSession(request)
+    const { response, user } = await updateSession(request)
 
     // 2. Handle Localization
     const country = getCountry(request)
@@ -12,17 +12,24 @@ export async function middleware(request: NextRequest) {
 
     // Ensure cookies are set if missing
     if (!request.cookies.has("country")) {
-        sessionResponse.cookies.set("country", country)
+        response.cookies.set("country", country)
     }
     if (!request.cookies.has("locale")) {
-        sessionResponse.cookies.set("locale", locale)
+        response.cookies.set("locale", locale)
     }
 
-    // 3. Handle Admin Session (Custom JWT)
+    // 3. Protected Routes (Customer)
+    if ((request.nextUrl.pathname.startsWith('/account') || request.nextUrl.pathname.startsWith('/checkout')) && !user) {
+        const loginUrl = new URL("/login", request.url);
+        loginUrl.searchParams.set("next", request.nextUrl.pathname);
+        return NextResponse.redirect(loginUrl);
+    }
+
+    // 4. Handle Admin Session (Custom JWT)
     if (request.nextUrl.pathname.startsWith('/admin')) {
         // Allow the login and signup pages
         if (request.nextUrl.pathname === '/admin/login' || request.nextUrl.pathname === '/admin/signup') {
-            return sessionResponse;
+            return response;
         }
 
         const adminSession = request.cookies.get("admin_session")?.value;
@@ -37,7 +44,7 @@ export async function middleware(request: NextRequest) {
         // actual validity/role is checked in RSC via requireAdmin.
     }
 
-    return sessionResponse
+    return response
 }
 
 export const config = {

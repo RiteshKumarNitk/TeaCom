@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const initialState = {
     error: ""
@@ -67,17 +68,29 @@ export default function CheckoutPage() {
 
     useEffect(() => {
         setMounted(true);
-        // Fetch saved addresses
-        getUserAddresses().then((data) => {
-            setSavedAddresses(data);
-            // Auto-select default if exists
-            const defaultAddr = data.find((a: any) => a.is_default);
-            if (defaultAddr) {
-                selectAddress(defaultAddr);
-            } else if (data.length > 0) {
-                selectAddress(data[0]);
+
+        const checkAuth = async () => {
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = "/login?next=/checkout";
+                return;
             }
-        });
+
+            // Fetch saved addresses
+            getUserAddresses().then((data) => {
+                setSavedAddresses(data);
+                // Auto-select default if exists
+                const defaultAddr = data.find((a: any) => a.is_default);
+                if (defaultAddr) {
+                    selectAddress(defaultAddr);
+                } else if (data.length > 0) {
+                    selectAddress(data[0]);
+                }
+            });
+        };
+
+        checkAuth();
     }, []);
 
     const selectAddress = (addr: any) => {

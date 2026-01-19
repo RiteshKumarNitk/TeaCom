@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Product, Money } from "@/types/product";
 import { useCountry } from "@/context/country-context";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export interface CartItem {
     id: string; // Composite ID: productId_variantId
@@ -32,6 +34,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
     const { country } = useCountry();
+    const router = useRouter();
+    const supabase = createClient();
 
     // Load from local storage
     useEffect(() => {
@@ -53,7 +57,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
     }, [items, isInitialized]);
 
-    const addItem = useCallback((product: Product, quantity: number, variantId?: string, variantName?: string, variantPrice?: Money) => {
+    const addItem = useCallback(async (product: Product, quantity: number, variantId?: string, variantName?: string, variantPrice?: Money) => {
+        // Auth Check
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+
         // Use provided variant price OR fallback to base price
         const currentPrice = variantPrice || (product.basePrice[country] || product.basePrice["in"]);
 
@@ -82,7 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             ];
         });
         setIsOpen(true); // Open cart on add
-    }, [country]);
+    }, [country, router, supabase]);
 
     const removeItem = useCallback((itemId: string) => {
         setItems((prev) => prev.filter((item) => item.id !== itemId));

@@ -48,6 +48,11 @@ export async function login(prevState: any, formData: FormData) {
         redirect("/admin");
     }
 
+    const redirectTo = formData.get("redirectTo") as string;
+    if (redirectTo && redirectTo.startsWith("/")) {
+        redirect(redirectTo);
+    }
+
     redirect("/");
 }
 

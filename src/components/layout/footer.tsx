@@ -74,8 +74,11 @@ export async function Footer() {
                     </div>
                 </div>
 
-                <div className="border-t border-primary/10 pt-8 text-center text-xs opacity-60">
+                <div className="border-t border-primary/10 pt-8 flex flex-col md:flex-row justify-between items-center text-xs opacity-60">
                     <p>{footerConfig.copyright_text || `© ${new Date().getFullYear()} Hi Storm Tea. All rights reserved.`}</p>
+                    <Link href="/admin/login" className="hover:text-primary transition-colors mt-2 md:mt-0">
+                        Admin Login
+                    </Link>
                 </div>
             </div>
         </footer>
