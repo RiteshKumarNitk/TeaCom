@@ -10,6 +10,7 @@ TeaCom is a modern, full-featured e-commerce application designed for selling pr
 - **Product Details**: Rich product pages with ingredient lists, health benefits, and variant selection.
 - **Shopping Experience**: 
   - Cart management.
+  - **Multi-Currency Support** (INR & SAR).
   - Secure checkout flow.
   - Wishlist functionality.
   - Order tracking system.
@@ -31,14 +32,17 @@ TeaCom is a modern, full-featured e-commerce application designed for selling pr
 
 ## 🛠️ Technology Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, Server Actions)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Server Actions)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **UI Components**: [Shadcn/ui](https://ui.shadcn.com/) (Radix UI based)
 - **Database & Auth**: [Supabase](https://supabase.com/) (PostgreSQL)
 - **State Management**: [TanStack Query](https://tanstack.com/query/latest)
 - **Form Handling**: React Hook Form + Zod validation
 - **Date Handling**: date-fns
+- **Email**: [Resend](https://resend.com/)
+- **Monitoring**: [Sentry](https://sentry.io/)
+- **Reporting**: jsPDF (PDF generation), XLSX (Excel export)
 
 ## 📂 Project Structure
 
@@ -50,12 +54,17 @@ src/
 │   └── admin/           # Admin dashboard routes
 ├── components/          # Reusable UI components
 │   ├── admin/           # Admin-specific components
+│   ├── emails/          # Email templates
 │   ├── shop/            # Storefront components
 │   └── ui/              # Base UI components (buttons, inputs, etc.)
+├── context/             # React context providers
+├── hooks/               # Custom React hooks
 ├── lib/                 # Utilities and client setup
 │   └── supabase/        # Supabase client configurations
 ├── types/               # TypeScript type definitions (Database, etc.)
-└── services/            # Business logic and API calls
+├── services/            # Business logic and API calls
+├── middleware.ts        # Next.js Middleware (Auth protection)
+└── env.ts               # Type-safe environment variables
 ```
 
 ## 🚦 Getting Started
@@ -106,6 +115,13 @@ The project uses a comprehensive PostgreSQL schema including:
 
 Check `src/types/database.types.ts` for the full type definitions.
 
+## 📚 Documentation
+- [Database Schema](./docs/DATABASE.md) - Detailed breakdown of tables and relationships.
+- [Implementation Plan](./implementation_plan.md) - Current status and roadmap.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+MIT
